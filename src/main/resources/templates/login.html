@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Acceso · Bienestar Psicológico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy-dark: #111b33; --navy: #1a2744;
+            --wine: #6b1f2a; --wine-light: #8b2d3a;
+            --gold: #c9a84c; --cream: #f5f0e8;
+            --text: #2a2520; --text-light: #5a5550;
+        }
+        body {
+            font-family: 'EB Garamond', Georgia, serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2rem;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(107,31,42,0.2) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(90,103,65,0.15) 0%, transparent 50%),
+                #111b33;
+        }
+        .login-card {
+            background: var(--cream);
+            width: 100%; max-width: 420px;
+            padding: 3rem 2.5rem;
+            border-top: 4px solid var(--gold);
+        }
+        .login-eyebrow {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.75rem; letter-spacing: 0.3em;
+            text-transform: uppercase; color: var(--wine);
+            text-align: center; margin-bottom: 0.5rem;
+        }
+        .login-title {
+            font-family: 'EB Garamond', serif;
+            font-size: 2rem; font-weight: 400;
+            color: var(--navy-dark); text-align: center;
+            margin-bottom: 0.3rem;
+        }
+        .login-title em { font-style: italic; color: var(--wine); }
+        .login-sub {
+            text-align: center; font-size: 0.9rem;
+            color: var(--text-light); font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+        .divider {
+            width: 40px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 0 auto 1.5rem;
+        }
+        .field-group {
+            display: flex; flex-direction: column;
+            gap: 0.4rem; margin-bottom: 1.2rem;
+        }
+        .field-label {
+            font-size: 0.75rem; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--text-light);
+        }
+        .field-input {
+            border: 1px solid #d8d0c0;
+            padding: 0.75rem 1rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1rem; color: var(--text);
+            background: white; outline: none;
+            transition: border-color 0.2s;
+        }
+        .field-input:focus { border-color: var(--navy); }
+        .btn-login {
+            width: 100%;
+            background: var(--navy-dark); color: var(--cream);
+            padding: 0.9rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.1rem; letter-spacing: 0.08em;
+            border: none; cursor: pointer;
+            transition: background 0.3s; margin-top: 0.5rem;
+        }
+        .btn-login:hover { background: var(--wine); }
+        .error-msg {
+            background: rgba(107,31,42,0.08);
+            border: 1px solid rgba(107,31,42,0.25);
+            border-left: 3px solid var(--wine);
+            color: var(--wine);
+            padding: 0.8rem 1rem; font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
+        .back-link {
+            display: block; text-align: center;
+            margin-top: 1.5rem; font-size: 0.88rem;
+            color: var(--text-light); text-decoration: none;
+        }
+        .back-link:hover { color: var(--navy); }
+        .logout-msg {
+            background: rgba(90,103,65,0.1);
+            border-left: 3px solid #5a6741;
+            color: #3b5020;
+            padding: 0.8rem 1rem; font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <p class="login-eyebrow">Área Restringida</p>
+    <h1 class="login-title">Acceso a <em>Resultados</em></h1>
+    <div class="divider"></div>
+    <p class="login-sub">Solo personal autorizado</p>
+
+    <div class="error-msg" th:if="${param.error}">
+        ⚠ Usuario o contraseña incorrectos.
+    </div>
+    <div class="logout-msg" th:if="${param.logout}">
+        ✓ Sesión cerrada correctamente.
+    </div>
+
+    <form th:action="@{/login}" method="POST">
+        <div class="field-group">
+            <label class="field-label" for="username">Usuario</label>
+            <input type="text" id="username" name="username"
+                   class="field-input" placeholder="admin" required
+                   autocomplete="username"/>
+        </div>
+        <div class="field-group">
+            <label class="field-label" for="password">Contraseña</label>
+            <input type="password" id="password" name="password"
+                   class="field-input" placeholder="••••••••" required
+                   autocomplete="current-password"/>
+        </div>
+        <button type="submit" class="btn-login">✦ Ingresar</button>
+    </form>
+
+    <a href="/" class="back-link">← Volver al inicio</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="|Resultados · ${resultado.nombreCompleto}|">Resultados</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy: #1a2744; --navy-light: #243358; --navy-dark: #111b33;
+            --wine: #6b1f2a; --wine-light: #8b2d3a;
+            --olive: #5a6741; --olive-light: #7a8a56;
+            --gold: #c9a84c;
+            --cream: #f5f0e8; --cream-dark: #ece6d8;
+            --text: #2a2520; --text-light: #5a5550;
+        }
+        body { font-family: 'EB Garamond', Georgia, serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+        .top-header { background: var(--navy-dark); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); }
+        .header-brand { font-family: 'Cormorant Garamond', serif; color: var(--gold); font-size: 1rem; letter-spacing: .2em; text-transform: uppercase; text-decoration: none; }
+        .header-links { display: flex; gap: 1.5rem; }
+        .header-link { color: rgba(245,240,232,0.6); font-size: 0.9rem; text-decoration: none; transition: color .2s; }
+        .header-link:hover { color: var(--gold); }
+
+        .main-wrapper { max-width: 960px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+
+        /* HERO SECTION */
+        .result-hero { background: var(--navy-dark); color: var(--cream); padding: 2.5rem; margin-bottom: 2.5rem; position: relative; overflow: hidden; }
+        .result-hero::before { content: ''; position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; border-radius: 50%; border: 1px solid rgba(201,168,76,0.08); }
+        .result-eyebrow { font-family: 'Cormorant Garamond', serif; font-size: .8rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); margin-bottom: .5rem; }
+        .result-name { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 400; line-height: 1.1; margin-bottom: 1.2rem; }
+        .result-meta { display: flex; flex-wrap: wrap; gap: 1rem 2rem; font-size: .9rem; color: rgba(245,240,232,0.6); }
+        .meta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); display: inline-block; margin-right: 5px; }
+
+        /* GLOBAL SCORE CARD */
+        .global-card { background: white; border: 1px solid rgba(201,168,76,0.25); padding: 2rem 2.5rem; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; }
+        .global-score-ring { width: 120px; height: 120px; flex-shrink: 0; position: relative; }
+        .global-score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #eee; stroke-width: 8; }
+        .ring-fill { fill: none; stroke: var(--navy); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 301.6; stroke-dashoffset: 301.6; transition: stroke-dashoffset 1.5s ease; }
+        .ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ring-number { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--navy); line-height: 1; }
+        .ring-label { font-size: .7rem; text-transform: uppercase; color: var(--text-light); }
+
+        /* TABS SYSTEM */
+        .tabs-bar { display: flex; border-bottom: 2px solid rgba(201,168,76,0.3); margin-bottom: 2rem; }
+        .tab-btn { padding: .75rem 1.6rem; font-family: 'EB Garamond', serif; font-size: 1rem; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; color: var(--text-light); transition: all .2s; }
+        .tab-btn.active { color: var(--navy-dark); border-bottom-color: var(--wine); font-weight: 600; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn .3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* GRIDS & CARDS */
+        .dim-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-bottom: 2.5rem; }
+        .dim-result-card { background: white; border: 1px solid #e8e0d0; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .dim-title { font-weight: 600; color: var(--navy-dark); font-size: 1.1rem; }
+        .td-score { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; color: var(--gold); line-height: 1; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .chart-card { background: white; border: 1px solid rgba(201,168,76,0.2); padding: 1.8rem; }
+        .chart-container { position: relative; height: 450px; width: 100%; margin: 0 auto; max-width: 600px; }
+
+        /* BADGES */
+        .level-badge { display: inline-block; padding: .3rem 1rem; font-size: .8rem; text-transform: uppercase; border: 1px solid; width: fit-content; }
+        .level-Alto { background: rgba(90,103,65,.12); color: var(--olive); border-color: rgba(90,103,65,.3); }
+        .level-Medio { background: rgba(201,168,76,.1); color: #8a6820; border-color: rgba(201,168,76,.3); }
+        .level-Bajo { background: rgba(107,31,42,.08); color: var(--wine); border-color: rgba(107,31,42,.2); }
+
+        .actions-bar { display: flex; gap: 1rem; margin-top: 3rem; border-top: 1px solid rgba(201,168,76,0.3); padding-top: 1.5rem; }
+        .btn-navy { background: var(--navy-dark); color: white; padding: .8rem 1.8rem; text-decoration: none; display: inline-block; border: none; font-family: inherit; font-size: 1rem; cursor: pointer; }
+        .btn-navy:hover { background: var(--navy); }
+
+        @media print { .top-header, .tabs-bar, .actions-bar { display: none; } .tab-panel { display: block !important; } }
+    </style>
+</head>
+<body>
+
+<div class="top-header">
+    <a href="/" class="header-brand">Escala Ryff</a>
+    <div class="header-links">
+        <a href="/evaluacion/nueva" class="header-link">Nueva Evaluación</a>
+        <a href="/resultados" class="header-link">← Lista</a>
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <div class="result-hero">
+        <p class="result-eyebrow">Resultado Individual · Bienestar Psicológico</p>
+        <h1 class="result-name" th:text="${resultado.nombreCompleto}">Nombre del Alumno</h1>
+        <div class="result-meta">
+            <span><span class="meta-dot"></span><span th:text="${resultado.sexo}"></span></span>
+            <span><span class="meta-dot"></span><span th:text="${resultado.edad} + ' años'"></span></span>
+            <span><span class="meta-dot"></span><span th:text="${resultado.anioEscolar}"></span></span>
+            <span><span class="meta-dot"></span>Grupo <span th:text="${resultado.grupo}"></span></span>
+        </div>
+    </div>
+
+    <div class="global-card">
+        <div class="global-score-ring">
+            <svg viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="48"/>
+                <circle class="ring-fill" id="globalRing" cx="50" cy="50" r="48"/>
+            </svg>
+            <div class="ring-text">
+                <div class="ring-number" th:text="${#numbers.formatDecimal(resultado.bienestarGlobal,1,2)}">0.00</div>
+                <div class="ring-label">/ 6.00</div>
+            </div>
+        </div>
+        <div class="global-info">
+            <h2 class="global-title">Bienestar Psicológico Global</h2>
+            <p class="global-desc">Promedio general ponderado de las dimensiones evaluadas.</p>
+            <span class="level-badge" th:classappend="|level-${resultado.nivelBienestarGlobal}|" th:text="|Nivel ${resultado.nivelBienestarGlobal}|"></span>
+        </div>
+    </div>
+
+    <div class="tabs-bar">
+        <button class="tab-btn active" onclick="showTab('tab-dimensiones', this)">📊 Dimensiones</button>
+        <button class="tab-btn" onclick="showTab('tab-graficas', this)">🕸 Ver Gráficas</button>
+    </div>
+
+    <div id="tab-dimensiones" class="tab-panel active">
+        <div class="dim-result-grid">
+            <div class="dim-result-card">
+                <span class="dim-title">Autoaceptación</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.autoaceptacion,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelAutoaceptacion}|" th:text="${resultado.nivelAutoaceptacion}"></span>
+            </div>
+            <div class="dim-result-card">
+                <span class="dim-title">Relaciones Positivas</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.relacionesPositivas,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelRelacionesPositivas}|" th:text="${resultado.nivelRelacionesPositivas}"></span>
+            </div>
+            <div class="dim-result-card">
+                <span class="dim-title">Autonomía</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.autonomia,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelAutonomia}|" th:text="${resultado.nivelAutonomia}"></span>
+            </div>
+            <div class="dim-result-card">
+                <span class="dim-title">Dominio del Entorno</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.dominioEntorno,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelDominioEntorno}|" th:text="${resultado.nivelDominioEntorno}"></span>
+            </div>
+            <div class="dim-result-card">
+                <span class="dim-title">Propósito en la Vida</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.propositoVida,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelPropositoVida}|" th:text="${resultado.nivelPropositoVida}"></span>
+            </div>
+            <div class="dim-result-card">
+                <span class="dim-title">Crecimiento Personal</span>
+                <span class="td-score" th:text="${#numbers.formatDecimal(resultado.crecimientoPersonal,1,2)}"></span>
+                <span class="level-badge" th:classappend="|level-${resultado.nivelCrecimientoPersonal}|" th:text="${resultado.nivelCrecimientoPersonal}"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-graficas" class="tab-panel">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 style="text-align: center; margin-bottom: 1.5rem; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;">Perfil de Bienestar (Radar)</h3>
+                <div class="chart-container">
+                    <canvas id="radarIndividual"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions-bar">
+        <a href="/resultados" class="btn-navy">Regresar</a>
+        <button onclick="window.print()" class="btn-navy" style="background: var(--wine);">Imprimir PDF</button>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Extraemos los datos de Thymeleaf a una constante de JS
+    const INDIVIDUO = {
+        nombre: [[${resultado.nombreCompleto}]],
+        datos: [
+            [[${resultado.autoaceptacion}]],
+            [[${resultado.relacionesPositivas}]],
+            [[${resultado.autonomia}]],
+            [[${resultado.dominioEntorno}]],
+            [[${resultado.propositoVida}]],
+            [[${resultado.crecimientoPersonal}]]
+        ]
+    };
+</script>
+
+<script>
+    function showTab(id, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+
+        if (id === 'tab-graficas') {
+            // Un pequeño delay para asegurar que el canvas es visible antes de dibujar
+            setTimeout(initRadar, 50);
+        }
+    }
+
+    let radarChart = null;
+    function initRadar() {
+        if (radarChart) return;
+        const ctx = document.getElementById('radarIndividual').getContext('2d');
+        radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Autoaceptación', 'Relaciones', 'Autonomía', 'Entorno', 'Propósito', 'Crecimiento'],
+                datasets: [{
+                    label: 'Puntaje obtenido',
+                    data: INDIVIDUO.datos,
+                    backgroundColor: 'rgba(107, 31, 42, 0.2)',
+                    borderColor: '#6b1f2a',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#c9a84c',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 6,
+                        ticks: { stepSize: 1, display: true },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        angleLines: { color: 'rgba(0,0,0,0.1)' },
+                        pointLabels: { font: { size: 14, family: 'EB Garamond' } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Animación del anillo global al cargar
+    window.onload = () => {
+        const ring = document.getElementById('globalRing');
+        const scoreStr = document.querySelector('.ring-number').textContent;
+        const score = parseFloat(scoreStr);
+        // Circunferencia = 2 * PI * r (r=48) -> ~301.6
+        const offset = 301.6 * (1 - score / 6);
+        setTimeout(() => {
+            ring.style.strokeDashoffset = offset;
+        }, 300);
+    };
+</script>
+
+</body>
+</html>

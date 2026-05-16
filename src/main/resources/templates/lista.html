@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lista de Resultados · Bienestar Psicológico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy:#1a2744; --navy-light:#243358; --navy-dark:#111b33;
+            --wine:#6b1f2a; --wine-light:#8b2d3a;
+            --olive:#5a6741; --olive-light:#7a8a56;
+            --gold:#c9a84c;
+            --cream:#f5f0e8; --cream-dark:#ece6d8;
+            --text:#2a2520; --text-light:#5a5550;
+        }
+        body { font-family:'EB Garamond',Georgia,serif; background:var(--cream); color:var(--text); min-height:100vh; }
+
+        .top-header {
+            background:var(--navy-dark); padding:1rem 2rem;
+            display:flex; align-items:center; justify-content:space-between;
+            border-bottom:2px solid var(--gold);
+        }
+        .header-brand { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1rem; letter-spacing:.2em; text-transform:uppercase; text-decoration:none; }
+        .header-link { color:rgba(245,240,232,0.6); font-size:0.9rem; text-decoration:none; transition:color .2s; }
+        .header-link:hover { color:var(--gold); }
+
+        .main-wrapper { max-width:1100px; margin:0 auto; padding:3rem 2rem 5rem; }
+
+        .page-title-row {
+            display:flex; align-items:flex-end; justify-content:space-between;
+            flex-wrap:wrap; gap:1rem;
+            margin-bottom:2.5rem; padding-bottom:1.5rem;
+            border-bottom:1px solid rgba(201,168,76,0.3);
+        }
+        .page-title { font-family:'EB Garamond',serif; font-size:clamp(1.8rem,3vw,2.5rem); font-weight:400; color:var(--navy-dark); }
+        .page-title em { font-style:italic; color:var(--wine); }
+        .page-count { font-family:'Cormorant Garamond',serif; font-size:1rem; color:var(--text-light); letter-spacing:.05em; }
+
+        .flash-exito { background:#f0f5ed; border:1px solid #b8d4a8; border-left:4px solid var(--olive); padding:1rem 1.5rem; margin-bottom:1.5rem; color:var(--olive); font-size:.95rem; }
+        .flash-error { background:#fdf0f0; border:1px solid #e8b4b4; border-left:4px solid var(--wine); padding:1rem 1.5rem; margin-bottom:1.5rem; color:var(--wine); font-size:.95rem; }
+
+        .filters-bar {
+            background:white; border:1px solid rgba(201,168,76,0.2);
+            padding:1.2rem 1.5rem;
+            display:flex; align-items:flex-end; gap:1rem; flex-wrap:wrap;
+            margin-bottom:1.5rem;
+        }
+        .filter-group { display:flex; flex-direction:column; gap:0.3rem; }
+        .filter-label { font-size:0.75rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-light); }
+        .filter-select { border:1px solid #d8d0c0; padding:.55rem .9rem; font-family:'EB Garamond',serif; font-size:0.95rem; color:var(--text); background:#faf8f4; cursor:pointer; min-width:140px; outline:none; transition:border-color .2s; }
+        .filter-select:focus { border-color:var(--navy); }
+        .btn-filter { padding:.57rem 1.5rem; background:var(--navy); color:var(--cream); border:none; cursor:pointer; font-family:'EB Garamond',serif; font-size:0.95rem; letter-spacing:.05em; transition:background .2s; }
+        .btn-filter:hover { background:var(--navy-light); }
+        .btn-clear { padding:.57rem 1.2rem; background:transparent; color:var(--text-light); border:1px solid #d8d0c0; cursor:pointer; font-family:'EB Garamond',serif; font-size:0.95rem; text-decoration:none; transition:all .2s; }
+        .btn-clear:hover { border-color:var(--wine); color:var(--wine); }
+
+        .table-wrapper { background:white; border:1px solid rgba(201,168,76,0.2); overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; font-size:0.97rem; }
+        thead th { background:var(--navy); color:var(--cream); padding:.85rem 1.1rem; text-align:left; font-weight:400; font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+        tbody tr { border-bottom:1px solid #f0ebe0; transition:background .15s; }
+        tbody tr:last-child { border-bottom:none; }
+        tbody tr:hover { background:#faf6ee; }
+        tbody td { padding:.8rem 1.1rem; vertical-align:middle; }
+
+        .score-cell { font-family:'Cormorant Garamond',serif; font-size:1.3rem; color:var(--gold); white-space:nowrap; }
+        .score-global { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--navy); white-space:nowrap; }
+
+        .level-badge { display:inline-block; padding:.25rem .7rem; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+        .level-Alto { background:rgba(90,103,65,.1); color:var(--olive); border:1px solid rgba(90,103,65,.25); }
+        .level-Medio { background:rgba(201,168,76,.1); color:#8a6820; border:1px solid rgba(201,168,76,.25); }
+        .level-Bajo { background:rgba(107,31,42,.07); color:var(--wine); border:1px solid rgba(107,31,42,.18); }
+
+        .td-actions { display:flex; gap:.5rem; align-items:center; }
+        .btn-view { padding:.35rem .9rem; background:var(--olive); color:white; text-decoration:none; font-size:.85rem; transition:background .2s; }
+        .btn-view:hover { background:var(--olive-light); }
+        .btn-delete {
+            padding:.35rem .7rem;
+            background:transparent;
+            color:var(--wine);
+            border:1px solid rgba(107,31,42,.25);
+            font-size:.85rem;
+            cursor:pointer;
+            font-family:'EB Garamond',serif;
+            transition:all .2s;
+        }
+        .btn-delete:hover { background:rgba(107,31,42,.05); border-color:var(--wine); }
+
+        .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-light); }
+        .empty-icon { font-size:3rem; margin-bottom:1rem; opacity:.3; }
+
+        .new-eval-btn { display:inline-flex; align-items:center; gap:.6rem; background:var(--wine); color:var(--cream); padding:.75rem 1.8rem; font-family:'EB Garamond',serif; font-size:1rem; letter-spacing:.05em; text-decoration:none; transition:all .3s; }
+        .new-eval-btn:hover { background:var(--wine-light); transform:translateY(-2px); }
+    </style>
+</head>
+<body>
+
+<div class="top-header">
+    <a href="/" class="header-brand">Escala Ryff</a>
+    <a href="/" class="header-link">← Inicio</a>
+</div>
+
+<div class="main-wrapper">
+
+    <div class="page-title-row">
+        <div>
+            <h1 class="page-title">Lista de <em>Evaluaciones</em></h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <span class="page-count" th:text="|${resultados.size()} registro(s)|"></span>
+            <a href="/resultados/comparativa-grupal" class="btn-group-chart" style="background:var(--olive); color:white; padding:.75rem 1.8rem; text-decoration:none; font-family:'EB Garamond',serif; font-size:1rem;">📊 Gráfica Grupal</a>
+            <a href="/evaluacion/nueva" class="new-eval-btn">✦ Nueva Evaluación</a>
+        </div>
+    </div>
+
+    <!-- FLASH -->
+    <div class="flash-exito" th:if="${exito}" th:text="${exito}"></div>
+    <div class="flash-error" th:if="${error}" th:text="${error}"></div>
+
+    <!-- FILTROS -->
+    <form method="GET" action="/resultados" class="filters-bar">
+        <div class="filter-group">
+            <label class="filter-label">Año Escolar</label>
+            <select name="anio" class="filter-select">
+                <option value="">— Todos —</option>
+                <option th:each="a : ${anios}" th:value="${a}" th:text="${a}"
+                        th:selected="${a == filtroAnio}"></option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Grupo</label>
+            <select name="grupo" class="filter-select">
+                <option value="">— Todos —</option>
+                <option th:each="g : ${grupos}" th:value="${g}" th:text="${g}"
+                        th:selected="${g == filtroGrupo}"></option>
+            </select>
+        </div>
+        <button type="submit" class="btn-filter">Filtrar</button>
+        <a href="/resultados" class="btn-clear">Limpiar</a>
+    </form>
+
+    <!-- TABLA -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>Participante</th>
+                <th>Grupo / Año</th>
+                <th>Autoacep.</th>
+                <th>Relaciones</th>
+                <th>Autonomía</th>
+                <th>Dom. Entorno</th>
+                <th>Propósito</th>
+                <th>Crecimiento</th>
+                <th>Global</th>
+                <th>Nivel</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${resultados.empty}">
+                <td colspan="11">
+                    <div class="empty-state">
+                        <div class="empty-icon">◌</div>
+                        <div>No hay evaluaciones registradas aún.</div>
+                    </div>
+                </td>
+            </tr>
+            <tr th:each="r : ${resultados}">
+                <td>
+                    <div style="font-weight:500;" th:text="${r.nombreCompleto}"></div>
+                    <div style="font-size:.85rem; color:var(--text-light);" th:text="${r.sexo} + ' · ' + ${r.edad} + ' años'"></div>
+                </td>
+                <td th:text="${r.anioEscolar} + ' — ' + ${r.grupo}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.autoaceptacion,1,2)}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.relacionesPositivas,1,2)}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.autonomia,1,2)}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.dominioEntorno,1,2)}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.propositoVida,1,2)}"></td>
+                <td class="score-cell" th:text="${#numbers.formatDecimal(r.crecimientoPersonal,1,2)}"></td>
+                <td class="score-global" th:text="${#numbers.formatDecimal(r.bienestarGlobal,1,2)}"></td>
+                <td>
+                        <span class="level-badge"
+                              th:classappend="|level-${r.nivelBienestarGlobal}|"
+                              th:text="${r.nivelBienestarGlobal}"></span>
+                </td>
+                <td>
+                    <div class="td-actions">
+                        <a th:href="@{/resultados/{id}(id=${r.participanteId})}" class="btn-view">Ver</a>
+                        <form th:action="@{/resultados/eliminar/{id}(id=${r.participanteId})}"
+                              method="POST"
+                              style="margin:0;"
+                              onsubmit="return confirm('¿Eliminar este registro?')">
+                            <button type="submit" class="btn-delete">✕</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

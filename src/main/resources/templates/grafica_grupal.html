@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Comparativa Grupal · Escala Ryff</title>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond&family=Cormorant+Garamond&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root { --navy: #1a2744; --wine: #6b1f2a; --gold: #c9a84c; --cream: #f5f0e8; }
+        body { font-family: 'EB Garamond', serif; background: var(--cream); padding: 2rem; }
+        .main-wrapper { max-width: 900px; margin: 0 auto; }
+        .chart-card { background: white; padding: 2rem; border: 1px solid var(--gold); }
+        .chart-container { position: relative; height: 500px; }
+        .btn-navy { background: var(--navy); color: white; padding: .8rem 1.8rem; text-decoration: none; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <h1 style="border-bottom: 2px solid var(--gold); margin-bottom: 2rem;">Comparativa por <em>Grupo</em></h1>
+    <div class="chart-card">
+        <div class="chart-container"><canvas id="radarGrupal"></canvas></div>
+    </div>
+    <div style="margin-top: 2rem;">
+        <a th:href="@{/resultados}" class="btn-navy">← Volver</a>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const DATOS_GRUPOS = [[${promediosGrupos}]];
+</script>
+
+<script>
+    function initRadarGrupal() {
+        const ctx = document.getElementById('radarGrupal').getContext('2d');
+        const labels = ['Autoaceptación', 'Relaciones', 'Autonomía', 'Entorno', 'Propósito', 'Crecimiento'];
+        const paleta = [
+            { bg: 'rgba(107,31,42,0.1)', border: '#6b1f2a' },
+            { bg: 'rgba(26,39,68,0.1)', border: '#1a2744' }
+        ];
+
+        const datasets = DATOS_GRUPOS.map((grupo, i) => ({
+            label: 'Grupo ' + grupo[0],
+            data: [grupo[1], grupo[2], grupo[3], grupo[4], grupo[5], grupo[6]],
+            backgroundColor: paleta[i % paleta.length].bg,
+            borderColor: paleta[i % paleta.length].border,
+            borderWidth: 2
+        }));
+
+        new Chart(ctx, {
+            type: 'radar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { r: { min: 0, max: 6 } }
+            }
+        });
+    }
+    window.onload = initRadarGrupal;
+</script>
+</body>
+</html>

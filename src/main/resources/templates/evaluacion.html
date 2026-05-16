@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Nueva Evaluación · Bienestar Psicológico</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:       #1a2744;
+            --navy-light: #243358;
+            --navy-dark:  #111b33;
+            --wine:       #6b1f2a;
+            --wine-light: #8b2d3a;
+            --olive:      #5a6741;
+            --olive-light:#7a8a56;
+            --gold:       #c9a84c;
+            --cream:      #f5f0e8;
+            --cream-dark: #ece6d8;
+            --text:       #2a2520;
+            --text-light: #5a5550;
+        }
+
+        body {
+            font-family: 'EB Garamond', Georgia, serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── TOP HEADER ── */
+        .top-header {
+            background: var(--navy-dark);
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 2px solid var(--gold);
+        }
+        .header-brand {
+            font-family: 'Cormorant Garamond', serif;
+            color: var(--gold);
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .header-back {
+            color: rgba(245,240,232,0.6);
+            font-size: 0.9rem;
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            transition: color 0.2s;
+        }
+        .header-back:hover { color: var(--gold); }
+
+        /* ── MAIN WRAPPER ── */
+        .main-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 3rem 2rem 5rem;
+        }
+
+        /* ── PAGE TITLE ── */
+        .page-intro {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid rgba(201,168,76,0.3);
+        }
+        .page-eyebrow {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--wine);
+            margin-bottom: 0.8rem;
+        }
+        .page-title {
+            font-family: 'EB Garamond', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 400;
+            color: var(--navy-dark);
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+        }
+        .page-title em { font-style: italic; color: var(--wine); }
+        .instructions-box {
+            background: var(--navy-dark);
+            color: var(--cream);
+            padding: 1.8rem 2.2rem;
+            border-left: 4px solid var(--gold);
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+        .instructions-box p {
+            font-size: 1rem;
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .instructions-box p:last-child { margin-bottom: 0; }
+        .scale-row {
+            display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem;
+            margin-top: 0.8rem;
+        }
+        .scale-item {
+            font-size: 0.9rem;
+            color: rgba(245,240,232,0.75);
+        }
+        .scale-item strong { color: var(--gold); }
+
+        /* ── FLASH MESSAGES ── */
+        .flash-error {
+            background: #fdf0f0;
+            border: 1px solid #e8b4b4;
+            border-left: 4px solid var(--wine);
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            color: var(--wine);
+            font-size: 0.95rem;
+        }
+
+        /* ── SECTION BLOCK ── */
+        .form-section {
+            background: white;
+            border: 1px solid rgba(201,168,76,0.2);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .form-section-header {
+            background: var(--navy);
+            color: var(--cream);
+            padding: 1rem 1.8rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .form-section-header .section-icon {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(201,168,76,0.15);
+            border: 1px solid rgba(201,168,76,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.85rem;
+            color: var(--gold);
+            flex-shrink: 0;
+        }
+        .form-section-header h3 {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+        }
+        .form-section-body { padding: 2rem 1.8rem; }
+
+        /* ── FORM FIELDS ── */
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.4rem;
+        }
+        .field-full { grid-column: 1 / -1; }
+
+        .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+        .field-label {
+            font-size: 0.82rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .field-input {
+            border: 1px solid #d8d0c0;
+            padding: 0.7rem 1rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1rem;
+            color: var(--text);
+            background: #faf8f4;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .field-input:focus {
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(26,39,68,0.08);
+            background: white;
+        }
+        select.field-input { cursor: pointer; }
+
+        /* ── DIMENSION HEADER (for question groups) ── */
+        .dim-header {
+            display: flex; align-items: center; gap: 1rem;
+            margin: 2.5rem 0 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(201,168,76,0.3);
+        }
+        .dim-header:first-child { margin-top: 0; }
+        .dim-badge {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--wine);
+            background: rgba(107,31,42,0.06);
+            border: 1px solid rgba(107,31,42,0.15);
+            padding: 0.3rem 0.8rem;
+            white-space: nowrap;
+        }
+        .dim-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(201,168,76,0.4), transparent);
+        }
+
+        /* ── QUESTION ITEM ── */
+        .question-item {
+            display: grid;
+            grid-template-columns: 2.5rem 1fr;
+            gap: 1rem;
+            align-items: start;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid #f0ebe0;
+            transition: background 0.15s;
+        }
+        .question-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .question-item:hover { background: rgba(201,168,76,0.03); margin: 0 -1.8rem; padding-left: 1.8rem; padding-right: 1.8rem; }
+
+        .question-num {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: rgba(201,168,76,0.6);
+            line-height: 1.2;
+            text-align: right;
+            padding-top: 0.1rem;
+        }
+        .question-content { display: flex; flex-direction: column; gap: 0.9rem; }
+        .question-text {
+            font-size: 1.02rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        /* ── LIKERT SLIDER ── */
+        .likert-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .likert-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        .likert-track {
+            position: relative;
+            height: 4px;
+            background: #e0d8c8;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .likert-fill {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            background: linear-gradient(90deg, var(--wine), var(--navy));
+            border-radius: 2px;
+            transition: width 0.2s ease;
+            pointer-events: none;
+        }
+        .likert-markers {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+        .likert-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.3rem;
+        }
+        .likert-option {
+            flex: 1;
+            text-align: center;
+        }
+        .likert-option input[type="radio"] { display: none; }
+        .likert-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+        }
+        .likert-dot {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid #d0c8b8;
+            background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .likert-option input:checked + label .likert-dot {
+            border-color: var(--navy);
+            background: var(--navy);
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(26,39,68,0.3);
+        }
+        .likert-option:nth-child(1) input:checked + label .likert-dot { background: #c0392b; border-color: #c0392b; }
+        .likert-option:nth-child(2) input:checked + label .likert-dot { background: #d35400; border-color: #d35400; }
+        .likert-option:nth-child(3) input:checked + label .likert-dot { background: #b7950b; border-color: #b7950b; }
+        .likert-option:nth-child(4) input:checked + label .likert-dot { background: var(--olive); border-color: var(--olive); }
+        .likert-option:nth-child(5) input:checked + label .likert-dot { background: var(--olive-light); border-color: var(--olive-light); }
+        .likert-option:nth-child(6) input:checked + label .likert-dot { background: var(--navy); border-color: var(--navy); }
+
+        .likert-val-label {
+            font-size: 0.72rem;
+            color: var(--text-light);
+            letter-spacing: 0.02em;
+            transition: color 0.2s;
+            text-align: center;
+            line-height: 1.2;
+            max-width: 54px;
+        }
+        .likert-option input:checked + label .likert-val-label {
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress-wrapper {
+            position: sticky;
+            top: 0; z-index: 50;
+            background: white;
+            border-bottom: 1px solid #e8e0d0;
+            padding: 0.6rem 1.8rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .progress-bar {
+            flex: 1; height: 5px;
+            background: #e8e0d0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--wine), var(--navy));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+        .progress-text strong { color: var(--navy); }
+
+        /* ── SUBMIT BUTTON ── */
+        .submit-area {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(201,168,76,0.3);
+        }
+        .btn-submit {
+            display: inline-flex; align-items: center; gap: 0.8rem;
+            background: var(--navy-dark);
+            color: var(--cream);
+            padding: 1rem 3rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.15rem;
+            letter-spacing: 0.08em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .btn-submit:hover {
+            background: var(--wine);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107,31,42,0.3);
+        }
+        .btn-submit:disabled {
+            opacity: 0.5; cursor: not-allowed; transform: none;
+        }
+        .submit-note {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.8rem;
+            font-style: italic;
+        }
+        .required-msg {
+            font-size: 0.85rem;
+            color: var(--wine);
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .required-msg.visible { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="top-header">
+    <a href="/" class="header-brand">Escala Ryff</a>
+    <a href="/" class="header-back">← Inicio</a>
+</div>
+
+<div class="main-wrapper">
+
+    <!-- PAGE INTRO -->
+    <div class="page-intro">
+        <p class="page-eyebrow">Escala de Bienestar Psicológico · Carol Ryff</p>
+        <h1 class="page-title">Nueva <em>Evaluación</em></h1>
+        <div class="instructions-box">
+            <p>A continuación encontrarás una serie de afirmaciones sobre cómo te sientes respecto a tu vida.
+                Lee cada frase con atención y elige el número que mejor describa tu grado de acuerdo.</p>
+            <p><strong style="color:var(--gold)">No hay respuestas correctas ni incorrectas — responde con sinceridad.</strong></p>
+            <div class="scale-row">
+                <span class="scale-item"><strong>1</strong> = Totalmente en desacuerdo</span>
+                <span class="scale-item"><strong>2</strong> = Bastante en desacuerdo</span>
+                <span class="scale-item"><strong>3</strong> = Algo en desacuerdo</span>
+                <span class="scale-item"><strong>4</strong> = Algo de acuerdo</span>
+                <span class="scale-item"><strong>5</strong> = Bastante de acuerdo</span>
+                <span class="scale-item"><strong>6</strong> = Totalmente de acuerdo</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLASH ERROR -->
+    <div class="flash-error" th:if="${error}" th:text="${error}"></div>
+
+    <!-- FORM -->
+    <form id="evaluacionForm" action="/evaluacion/guardar" method="POST">
+
+        <!-- DATOS SOCIODEMOGRÁFICOS -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="section-icon">I</div>
+                <h3>Datos Sociodemográficos</h3>
+            </div>
+            <div class="form-section-body">
+                <div class="fields-grid">
+                    <div class="field-group field-full">
+                        <label class="field-label" for="nombreCompleto">Nombre Completo *</label>
+                        <input type="text" id="nombreCompleto" name="nombreCompleto"
+                               class="field-input" required
+                               placeholder="Apellidos y nombre(s)"/>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="sexo">Sexo *</label>
+                        <select id="sexo" name="sexo" class="field-input" required>
+                            <option value="">— Selecciona —</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="No binario">No binario</option>
+                            <option value="Prefiero no decir">Prefiero no decir</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="edad">Edad *</label>
+                        <input type="number" id="edad" name="edad"
+                               class="field-input" required
+                               min="1" max="100" placeholder="Ej. 20"/>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="anioEscolar">Año Escolar *</label>
+                        <select id="anioEscolar" name="anioEscolar" class="field-input" required>
+                            <option value="">— Selecciona —</option>
+                            <option value="1°">1° Semestre</option>
+                            <option value="2°">2° Semestre</option>
+                            <option value="3°">3° Semestre</option>
+                            <option value="4°">4° Semestre</option>
+                            <option value="5°">5° Semestre</option>
+                            <option value="6°">6° Semestre</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="grupo">Grupo *</label>
+                        <input type="text" id="grupo" name="grupo"
+                               class="field-input" required
+                               placeholder="Ej. A, B, C…" maxlength="10"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREGUNTAS -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="section-icon">II</div>
+                <h3>Cuestionario — 39 Ítems</h3>
+            </div>
+
+            <!-- Progress bar dentro del formulario -->
+            <div class="progress-wrapper">
+                <span class="progress-text"><strong id="respCount">0</strong>/39 respondidas</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="form-section-body" id="questions-container">
+
+                <!-- AUTOACEPTACIÓN: 1, 7, 13, 19, 25, 31 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Autoaceptación</span>
+                    <div class="dim-line"></div>
+                </div>
+
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 1 or entry.key == 7 or entry.key == 13 or entry.key == 19 or entry.key == 25 or entry.key == 31}"
+                     class="question-item"
+                     th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-wrapper">
+                            <div class="likert-options">
+                                <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                    <input type="radio"
+                                           th:id="|q${entry.key}_v${v}|"
+                                           th:name="|respuestas[${entry.key}]|"
+                                           th:value="${v}"
+                                           th:attr="data-q=${entry.key}"
+                                           class="resp-radio"/>
+                                    <label th:for="|q${entry.key}_v${v}|">
+                                        <span class="likert-dot" th:text="${v}"></span>
+                                        <span class="likert-val-label"
+                                              th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RELACIONES POSITIVAS: 2, 8, 14, 20, 26, 32 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Relaciones Positivas</span>
+                    <div class="dim-line"></div>
+                </div>
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 2 or entry.key == 8 or entry.key == 14 or entry.key == 20 or entry.key == 26 or entry.key == 32}"
+                     class="question-item" th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-options">
+                            <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                <input type="radio" th:id="|q${entry.key}_v${v}|"
+                                       th:name="|respuestas[${entry.key}]|" th:value="${v}"
+                                       th:attr="data-q=${entry.key}" class="resp-radio"/>
+                                <label th:for="|q${entry.key}_v${v}|">
+                                    <span class="likert-dot" th:text="${v}"></span>
+                                    <span class="likert-val-label"
+                                          th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AUTONOMÍA: 3, 9, 15, 21, 27, 33 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Autonomía</span>
+                    <div class="dim-line"></div>
+                </div>
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 3 or entry.key == 9 or entry.key == 15 or entry.key == 21 or entry.key == 27 or entry.key == 33}"
+                     class="question-item" th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-options">
+                            <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                <input type="radio" th:id="|q${entry.key}_v${v}|"
+                                       th:name="|respuestas[${entry.key}]|" th:value="${v}"
+                                       th:attr="data-q=${entry.key}" class="resp-radio"/>
+                                <label th:for="|q${entry.key}_v${v}|">
+                                    <span class="likert-dot" th:text="${v}"></span>
+                                    <span class="likert-val-label"
+                                          th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DOMINIO DEL ENTORNO: 4, 10, 16, 22, 28, 34 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Dominio del Entorno</span>
+                    <div class="dim-line"></div>
+                </div>
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 4 or entry.key == 10 or entry.key == 16 or entry.key == 22 or entry.key == 28 or entry.key == 34}"
+                     class="question-item" th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-options">
+                            <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                <input type="radio" th:id="|q${entry.key}_v${v}|"
+                                       th:name="|respuestas[${entry.key}]|" th:value="${v}"
+                                       th:attr="data-q=${entry.key}" class="resp-radio"/>
+                                <label th:for="|q${entry.key}_v${v}|">
+                                    <span class="likert-dot" th:text="${v}"></span>
+                                    <span class="likert-val-label"
+                                          th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROPÓSITO EN LA VIDA: 5, 11, 17, 23, 29, 35 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Propósito en la Vida</span>
+                    <div class="dim-line"></div>
+                </div>
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 5 or entry.key == 11 or entry.key == 17 or entry.key == 23 or entry.key == 29 or entry.key == 35}"
+                     class="question-item" th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-options">
+                            <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                <input type="radio" th:id="|q${entry.key}_v${v}|"
+                                       th:name="|respuestas[${entry.key}]|" th:value="${v}"
+                                       th:attr="data-q=${entry.key}" class="resp-radio"/>
+                                <label th:for="|q${entry.key}_v${v}|">
+                                    <span class="likert-dot" th:text="${v}"></span>
+                                    <span class="likert-val-label"
+                                          th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CRECIMIENTO PERSONAL: 6, 12, 18, 24, 30, 36, 37, 38, 39 -->
+                <div class="dim-header">
+                    <span class="dim-badge">Crecimiento Personal</span>
+                    <div class="dim-line"></div>
+                </div>
+                <div th:each="entry : ${preguntas}"
+                     th:if="${entry.key == 6 or entry.key == 12 or entry.key == 18 or entry.key == 24 or entry.key == 30 or entry.key == 36 or entry.key == 37 or entry.key == 38 or entry.key == 39}"
+                     class="question-item" th:attr="data-q=${entry.key}">
+                    <div class="question-num" th:text="${entry.key}"></div>
+                    <div class="question-content">
+                        <p class="question-text" th:text="${entry.value}"></p>
+                        <div class="likert-options">
+                            <div class="likert-option" th:each="v : ${#numbers.sequence(1,6)}">
+                                <input type="radio" th:id="|q${entry.key}_v${v}|"
+                                       th:name="|respuestas[${entry.key}]|" th:value="${v}"
+                                       th:attr="data-q=${entry.key}" class="resp-radio"/>
+                                <label th:for="|q${entry.key}_v${v}|">
+                                    <span class="likert-dot" th:text="${v}"></span>
+                                    <span class="likert-val-label"
+                                          th:text="${v == 1 ? 'Totalmente en desacuerdo' : v == 2 ? 'Bastante en desacuerdo' : v == 3 ? 'Algo en desacuerdo' : v == 4 ? 'Algo de acuerdo' : v == 5 ? 'Bastante de acuerdo' : 'Totalmente de acuerdo'}">
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /form-section-body -->
+        </div><!-- /form-section questions -->
+
+        <!-- SUBMIT -->
+        <div class="submit-area">
+            <p class="submit-note" id="submitNote">Responde todas las preguntas para poder enviar.</p>
+            <button type="submit" class="btn-submit" id="submitBtn">
+                ✦ &nbsp; Enviar Evaluación
+            </button>
+            <p class="required-msg" id="requiredMsg">
+                ⚠ Hay preguntas sin responder. Por favor completa el cuestionario antes de continuar.
+            </p>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    const TOTAL = 39;
+    const answered = new Set();
+
+    document.querySelectorAll('.resp-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            answered.add(parseInt(this.dataset.q));
+            updateProgress();
+            // highlight answered question
+            const item = this.closest('.question-item');
+            if (item) item.style.background = 'rgba(90,103,65,0.04)';
+        });
+    });
+
+    function updateProgress() {
+        const count = answered.size;
+        document.getElementById('respCount').textContent = count;
+        document.getElementById('progressFill').style.width = (count / TOTAL * 100) + '%';
+
+        if (count === TOTAL) {
+            document.getElementById('submitNote').style.display = 'none';
+        } else {
+            document.getElementById('submitNote').style.display = 'block';
+            document.getElementById('submitNote').textContent =
+                `Faltan ${TOTAL - count} pregunta${TOTAL - count !== 1 ? 's' : ''} por responder.`;
+        }
+    }
+
+    document.getElementById('evaluacionForm').addEventListener('submit', function(e) {
+        if (answered.size < TOTAL) {
+            e.preventDefault();
+            document.getElementById('requiredMsg').classList.add('visible');
+            // Scroll to first unanswered
+            for (let i = 1; i <= TOTAL; i++) {
+                if (!answered.has(i)) {
+                    const el = document.querySelector(`[data-q="${i}"]`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.style.background = 'rgba(107,31,42,0.06)';
+                        break;
+                    }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
