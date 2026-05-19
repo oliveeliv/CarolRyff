@@ -386,7 +386,8 @@
             box-shadow: 0 10px 30px rgba(107,31,42,0.3);
         }
         .btn-submit:disabled {
-            opacity: 0.5; cursor: not-allowed; transform: none;
+            background: #a0a0a0 !important;
+            opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
         }
         .submit-note {
             font-size: 0.85rem;
@@ -478,13 +479,27 @@
                             <option value="4°">4° Semestre</option>
                             <option value="5°">5° Semestre</option>
                             <option value="6°">6° Semestre</option>
+                            <option value="7°">7° Semestre</option>
+                            <option value="8°">8° Semestre</option>
+                            <option value="9°">9° Semestre</option>
+                            <option value="10°">10° Semestre</option>
+                            <option value="11°">11° Semestre</option>
                         </select>
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="grupo">Grupo *</label>
-                        <input type="text" id="grupo" name="grupo"
-                               class="field-input" required
-                               placeholder="Ej. A, B, C…" maxlength="10"/>
+                        <select id="grupo" name="grupo" class="field-input" required>
+                            <option value="">— Selecciona —</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                            <option value="F">F</option>
+                            <option value="G">G</option>
+                            <option value="H">H</option>
+                            <option value="I">I</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -714,6 +729,7 @@
 
         if (count === TOTAL) {
             document.getElementById('submitNote').style.display = 'none';
+            document.getElementById('requiredMsg').classList.remove('visible');
         } else {
             document.getElementById('submitNote').style.display = 'block';
             document.getElementById('submitNote').textContent =
@@ -721,22 +737,22 @@
         }
     }
 
+    // CONTROL DE ENVÍO Y PREVENCIÓN DE DOBLE CLIC
     document.getElementById('evaluacionForm').addEventListener('submit', function(e) {
+        // 1. Validar que se hayan respondido todas las preguntas
         if (answered.size < TOTAL) {
             e.preventDefault();
             document.getElementById('requiredMsg').classList.add('visible');
-            // Scroll to first unanswered
-            for (let i = 1; i <= TOTAL; i++) {
-                if (!answered.has(i)) {
-                    const el = document.querySelector(`[data-q="${i}"]`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        el.style.background = 'rgba(107,31,42,0.06)';
-                        break;
-                    }
-                }
-            }
+
+            // Hacer scroll hasta la sección de preguntas pendientes
+            document.getElementById('questions-container').scrollIntoView({ behavior: 'smooth' });
+            return false;
         }
+
+        // 2. Si todo está correcto, deshabilitar el botón de inmediato para evitar envíos múltiples
+        const btnSubmit = document.getElementById('submitBtn');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = "Procesando... Por favor espera ✦";
     });
 </script>
 </body>
