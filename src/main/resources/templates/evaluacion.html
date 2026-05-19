@@ -187,7 +187,7 @@
         }
         select.field-input { cursor: pointer; }
 
-        /* ── DIMENSION HEADER (for question groups) ── */
+        /* ── DIMENSION HEADER ── */
         .dim-header {
             display: flex; align-items: center; gap: 1rem;
             margin: 2.5rem 0 1.5rem;
@@ -245,33 +245,6 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-        }
-        .likert-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-light);
-            font-style: italic;
-        }
-        .likert-track {
-            position: relative;
-            height: 4px;
-            background: #e0d8c8;
-            border-radius: 2px;
-            cursor: pointer;
-        }
-        .likert-fill {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            background: linear-gradient(90deg, var(--wine), var(--navy));
-            border-radius: 2px;
-            transition: width 0.2s ease;
-            pointer-events: none;
-        }
-        .likert-markers {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 2px;
         }
         .likert-options {
             display: flex;
@@ -406,7 +379,6 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="top-header">
     <a href="/" class="header-brand">Escala Ryff</a>
     <a href="/" class="header-back">← Inicio</a>
@@ -414,7 +386,6 @@
 
 <div class="main-wrapper">
 
-    <!-- PAGE INTRO -->
     <div class="page-intro">
         <p class="page-eyebrow">Escala de Bienestar Psicológico · Carol Ryff</p>
         <h1 class="page-title">Nueva <em>Evaluación</em></h1>
@@ -433,13 +404,10 @@
         </div>
     </div>
 
-    <!-- FLASH ERROR -->
     <div class="flash-error" th:if="${error}" th:text="${error}"></div>
 
-    <!-- FORM -->
     <form id="evaluacionForm" action="/evaluacion/guardar" method="POST">
 
-        <!-- DATOS SOCIODEMOGRÁFICOS -->
         <div class="form-section">
             <div class="form-section-header">
                 <div class="section-icon">I</div>
@@ -505,14 +473,12 @@
             </div>
         </div>
 
-        <!-- PREGUNTAS -->
         <div class="form-section">
             <div class="form-section-header">
                 <div class="section-icon">II</div>
                 <h3>Cuestionario — 39 Ítems</h3>
             </div>
 
-            <!-- Progress bar dentro del formulario -->
             <div class="progress-wrapper">
                 <span class="progress-text"><strong id="respCount">0</strong>/39 respondidas</span>
                 <div class="progress-bar">
@@ -522,7 +488,6 @@
 
             <div class="form-section-body" id="questions-container">
 
-                <!-- AUTOACEPTACIÓN: 1, 7, 13, 19, 25, 31 -->
                 <div class="dim-header">
                     <span class="dim-badge">Autoaceptación</span>
                     <div class="dim-line"></div>
@@ -556,7 +521,6 @@
                     </div>
                 </div>
 
-                <!-- RELACIONES POSITIVAS: 2, 8, 14, 20, 26, 32 -->
                 <div class="dim-header">
                     <span class="dim-badge">Relaciones Positivas</span>
                     <div class="dim-line"></div>
@@ -583,7 +547,6 @@
                     </div>
                 </div>
 
-                <!-- AUTONOMÍA: 3, 9, 15, 21, 27, 33 -->
                 <div class="dim-header">
                     <span class="dim-badge">Autonomía</span>
                     <div class="dim-line"></div>
@@ -610,7 +573,6 @@
                     </div>
                 </div>
 
-                <!-- DOMINIO DEL ENTORNO: 4, 10, 16, 22, 28, 34 -->
                 <div class="dim-header">
                     <span class="dim-badge">Dominio del Entorno</span>
                     <div class="dim-line"></div>
@@ -637,7 +599,6 @@
                     </div>
                 </div>
 
-                <!-- PROPÓSITO EN LA VIDA: 5, 11, 17, 23, 29, 35 -->
                 <div class="dim-header">
                     <span class="dim-badge">Propósito en la Vida</span>
                     <div class="dim-line"></div>
@@ -664,7 +625,6 @@
                     </div>
                 </div>
 
-                <!-- CRECIMIENTO PERSONAL: 6, 12, 18, 24, 30, 36, 37, 38, 39 -->
                 <div class="dim-header">
                     <span class="dim-badge">Crecimiento Personal</span>
                     <div class="dim-line"></div>
@@ -691,19 +651,15 @@
                     </div>
                 </div>
 
-            </div><!-- /form-section-body -->
-        </div><!-- /form-section questions -->
-
-        <!-- SUBMIT -->
-        <div class="submit-area">
-            <p class="submit-note" id="submitNote">Responde todas las preguntas para poder enviar.</p>
-            <button type="submit" class="btn-submit" id="submitBtn">
-                ✦ &nbsp; Enviar Evaluación
-            </button>
-            <p class="required-msg" id="requiredMsg">
-                ⚠ Hay preguntas sin responder. Por favor completa el cuestionario antes de continuar.
-            </p>
-        </div>
+            </div></div><div class="submit-area">
+        <p class="submit-note" id="submitNote">Responde todas las preguntas para poder enviar.</p>
+        <button type="submit" class="btn-submit" id="submitBtn" disabled>
+            ✦ &nbsp; Enviar Evaluación
+        </button>
+        <p class="required-msg" id="requiredMsg">
+            ⚠ Hay preguntas sin responder. Por favor completa el cuestionario antes de continuar.
+        </p>
+    </div>
 
     </form>
 </div>
@@ -711,48 +667,49 @@
 <script>
     const TOTAL = 39;
     const answered = new Set();
+    const submitBtn = document.getElementById('submitBtn');
+    const submitNote = document.getElementById('submitNote');
+    const requiredMsg = document.getElementById('requiredMsg');
+    const respCountEl = document.getElementById('respCount');
+    const progressFill = document.getElementById('progressFill');
+
+    function updateProgress() {
+        const totalAnswered = answered.size;
+        respCountEl.textContent = totalAnswered;
+
+        const percentage = (totalAnswered / TOTAL) * 100;
+        progressFill.style.width = `${percentage}%`;
+
+        if (totalAnswered === TOTAL) {
+            submitBtn.removeAttribute('disabled');
+            submitNote.style.display = 'none';
+            requiredMsg.classList.remove('visible');
+        } else {
+            submitBtn.setAttribute('disabled', 'true');
+            submitNote.style.display = 'block';
+        }
+    }
 
     document.querySelectorAll('.resp-radio').forEach(radio => {
         radio.addEventListener('change', function() {
             answered.add(parseInt(this.dataset.q));
             updateProgress();
-            // highlight answered question
+
+            // Destacar de manera sutil la pregunta respondida
             const item = this.closest('.question-item');
-            if (item) item.style.background = 'rgba(90,103,65,0.04)';
+            if (item) {
+                item.style.background = 'rgba(90, 103, 65, 0.04)'; // Un toque olivo muy ligero
+            }
         });
     });
 
-    function updateProgress() {
-        const count = answered.size;
-        document.getElementById('respCount').textContent = count;
-        document.getElementById('progressFill').style.width = (count / TOTAL * 100) + '%';
-
-        if (count === TOTAL) {
-            document.getElementById('submitNote').style.display = 'none';
-            document.getElementById('requiredMsg').classList.remove('visible');
-        } else {
-            document.getElementById('submitNote').style.display = 'block';
-            document.getElementById('submitNote').textContent =
-                `Faltan ${TOTAL - count} pregunta${TOTAL - count !== 1 ? 's' : ''} por responder.`;
-        }
-    }
-
-    // CONTROL DE ENVÍO Y PREVENCIÓN DE DOBLE CLIC
+    // Validación extra antes del submit por si acaso
     document.getElementById('evaluacionForm').addEventListener('submit', function(e) {
-        // 1. Validar que se hayan respondido todas las preguntas
         if (answered.size < TOTAL) {
             e.preventDefault();
-            document.getElementById('requiredMsg').classList.add('visible');
-
-            // Hacer scroll hasta la sección de preguntas pendientes
-            document.getElementById('questions-container').scrollIntoView({ behavior: 'smooth' });
-            return false;
+            requiredMsg.classList.add('visible');
+            requiredMsg.scrollIntoView({ behavior: 'smooth' });
         }
-
-        // 2. Si todo está correcto, deshabilitar el botón de inmediato para evitar envíos múltiples
-        const btnSubmit = document.getElementById('submitBtn');
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = "Procesando... Por favor espera ✦";
     });
 </script>
 </body>

@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e4ea8d95-b263-488c-8483-ae82be024116" name="Changes" comment="Estructura base del proyecto Ryff">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/evaluacion.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/evaluacion.html" afterDir="false" />
-    </list>
+    <list default="true" id="e4ea8d95-b263-488c-8483-ae82be024116" name="Changes" comment="Estructura base del proyecto Ryff" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
