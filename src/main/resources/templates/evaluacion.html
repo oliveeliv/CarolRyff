@@ -676,7 +676,6 @@
     function updateProgress() {
         const totalAnswered = answered.size;
         respCountEl.textContent = totalAnswered;
-
         const percentage = (totalAnswered / TOTAL) * 100;
         progressFill.style.width = `${percentage}%`;
 
@@ -694,22 +693,23 @@
         radio.addEventListener('change', function() {
             answered.add(parseInt(this.dataset.q));
             updateProgress();
-
-            // Destacar de manera sutil la pregunta respondida
             const item = this.closest('.question-item');
-            if (item) {
-                item.style.background = 'rgba(90, 103, 65, 0.04)'; // Un toque olivo muy ligero
-            }
+            if (item) item.style.background = 'rgba(90, 103, 65, 0.04)';
         });
     });
 
-    // Validación extra antes del submit por si acaso
     document.getElementById('evaluacionForm').addEventListener('submit', function(e) {
         if (answered.size < TOTAL) {
             e.preventDefault();
             requiredMsg.classList.add('visible');
             requiredMsg.scrollIntoView({ behavior: 'smooth' });
+            return;
         }
+        // Deshabilitar botón para evitar doble envío
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ &nbsp; Guardando...';
+        submitBtn.style.background = '#5a6741';
+        submitBtn.style.cursor = 'not-allowed';
     });
 </script>
 </body>

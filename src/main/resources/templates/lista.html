@@ -78,22 +78,26 @@
         .btn-view { padding:.35rem .9rem; background:var(--olive); color:white; text-decoration:none; font-size:.85rem; transition:background .2s; }
         .btn-view:hover { background:var(--olive-light); }
         .btn-delete {
-            padding:.35rem .7rem;
-            background:transparent;
-            color:var(--wine);
-            border:1px solid rgba(107,31,42,.25);
-            font-size:.85rem;
-            cursor:pointer;
-            font-family:'EB Garamond',serif;
-            transition:all .2s;
+            padding:.35rem .7rem; background:transparent; color:var(--wine);
+            border:1px solid rgba(107,31,42,.25); font-size:.85rem; cursor:pointer;
+            font-family:'EB Garamond',serif; transition:all .2s;
         }
         .btn-delete:hover { background:rgba(107,31,42,.05); border-color:var(--wine); }
 
         .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-light); }
         .empty-icon { font-size:3rem; margin-bottom:1rem; opacity:.3; }
 
-        .new-eval-btn { display:inline-flex; align-items:center; gap:.6rem; background:var(--wine); color:var(--cream); padding:.75rem 1.8rem; font-family:'EB Garamond',serif; font-size:1rem; letter-spacing:.05em; text-decoration:none; transition:all .3s; }
-        .new-eval-btn:hover { background:var(--wine-light); transform:translateY(-2px); }
+        .btn-accion {
+            display:inline-flex; align-items:center; gap:.5rem;
+            color:white; padding:.75rem 1.8rem;
+            font-family:'EB Garamond',serif; font-size:1rem; letter-spacing:.05em;
+            text-decoration:none; transition:all .3s; border:none; cursor:pointer;
+        }
+        .btn-accion:hover { transform:translateY(-2px); opacity:.9; }
+        .btn-nueva  { background:var(--wine); }
+        .btn-nueva:hover { background:var(--wine-light); }
+        .btn-grupal { background:var(--navy); }
+        .btn-excel  { background:var(--olive); }
     </style>
 </head>
 <body>
@@ -105,14 +109,26 @@
 
 <div class="main-wrapper">
 
+    <!-- TÍTULO Y BOTONES -->
     <div class="page-title-row">
         <div>
             <h1 class="page-title">Lista de <em>Evaluaciones</em></h1>
         </div>
-        <div style="display:flex;align-items:center;gap:1rem;">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
             <span class="page-count" th:text="|${resultados.size()} registro(s)|"></span>
-            <a href="/resultados/comparativa-grupal" class="btn-group-chart" style="background:var(--olive); color:white; padding:.75rem 1.8rem; text-decoration:none; font-family:'EB Garamond',serif; font-size:1rem;">📊 Gráfica Grupal</a>
-            <a href="/evaluacion/nueva" class="new-eval-btn">✦ Nueva Evaluación</a>
+
+            <a href="/resultados/comparativa-grupal" class="btn-accion btn-grupal">
+                📊 Gráfica Grupal
+            </a>
+
+            <a th:href="@{/resultados/exportar-excel(grupo=${filtroGrupo},anio=${filtroAnio})}"
+               class="btn-accion btn-excel">
+                📥 Exportar Excel
+            </a>
+
+            <a href="/evaluacion/nueva" class="btn-accion btn-nueva">
+                ✦ Nueva Evaluación
+            </a>
         </div>
     </div>
 
@@ -172,7 +188,8 @@
             <tr th:each="r : ${resultados}">
                 <td>
                     <div style="font-weight:500;" th:text="${r.nombreCompleto}"></div>
-                    <div style="font-size:.85rem; color:var(--text-light);" th:text="${r.sexo} + ' · ' + ${r.edad} + ' años'"></div>
+                    <div style="font-size:.85rem;color:var(--text-light);"
+                         th:text="${r.sexo} + ' · ' + ${r.edad} + ' años'"></div>
                 </td>
                 <td th:text="${r.anioEscolar} + ' — ' + ${r.grupo}"></td>
                 <td class="score-cell" th:text="${#numbers.formatDecimal(r.autoaceptacion,1,2)}"></td>
@@ -189,10 +206,10 @@
                 </td>
                 <td>
                     <div class="td-actions">
-                        <a th:href="@{/resultados/{id}(id=${r.participanteId})}" class="btn-view">Ver</a>
+                        <a th:href="@{/resultados/{id}(id=${r.participanteId})}"
+                           class="btn-view">Ver</a>
                         <form th:action="@{/resultados/eliminar/{id}(id=${r.participanteId})}"
-                              method="POST"
-                              style="margin:0;"
+                              method="POST" style="margin:0;"
                               onsubmit="return confirm('¿Eliminar este registro?')">
                             <button type="submit" class="btn-delete">✕</button>
                         </form>

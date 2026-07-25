@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 public interface RespuestaRepository extends JpaRepository<Respuesta, Long> {
 
@@ -14,4 +16,6 @@ public interface RespuestaRepository extends JpaRepository<Respuesta, Long> {
     @Transactional
     @Query("DELETE FROM Respuesta r WHERE r.participante.id = ?1")
     void deleteByParticipanteId(Long participanteId);
+    @Query("SELECT r FROM Respuesta r WHERE r.participante.id = ?1 ORDER BY r.numeroPregunta ASC")
+    List<Respuesta> findByParticipanteIdOrderByNumeroPreguntaAsc(Long participanteId);
 }

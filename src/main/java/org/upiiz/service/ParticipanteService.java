@@ -1,6 +1,7 @@
 package org.upiiz.service;
 
 import org.upiiz.entities.Participante;
+import org.upiiz.entities.Respuesta;
 import org.upiiz.models.Resultado;
 import org.upiiz.repository.ParticipanteRepository;
 import org.upiiz.repository.RespuestaRepository;
@@ -19,7 +20,6 @@ public class ParticipanteService {
     private final RespuestaRepository respuestaRepository;
     private final BienestarService bienestarService;
 
-    // LISTAR TODOS
     public List<Participante> listarTodos() {
         return participanteRepository.findAllByOrderByFechaAplicacionDesc();
     }
@@ -30,7 +30,6 @@ public class ParticipanteService {
                 .toList();
     }
 
-    // BUSCAR POR ID
     public Optional<Participante> buscarPorId(Long id) {
         return participanteRepository.findById(id);
     }
@@ -40,7 +39,6 @@ public class ParticipanteService {
                 .map(bienestarService::toResultado);
     }
 
-    // FILTRAR — devuelve List<Resultado> (usado en lista general)
     public List<Resultado> filtrarResultados(String grupo, String anio) {
         return filtrarPorGrupoYAnio(grupo, anio)
                 .stream()
@@ -48,7 +46,6 @@ public class ParticipanteService {
                 .toList();
     }
 
-    // FILTRAR — devuelve List<Participante> (usado en promedio por grupo)
     public List<Participante> filtrarPorGrupoYAnio(String grupo, String anio) {
         if (grupo != null && !grupo.isBlank() && anio != null && !anio.isBlank()) {
             return participanteRepository
@@ -63,14 +60,12 @@ public class ParticipanteService {
         return listarTodos();
     }
 
-    // ELIMINAR
     @Transactional
     public void eliminar(Long id) {
         respuestaRepository.deleteByParticipanteId(id);
         participanteRepository.deleteById(id);
     }
 
-    // CATÁLOGOS
     public List<String> obtenerAnios() {
         return participanteRepository.findDistinctAnios();
     }
@@ -81,5 +76,9 @@ public class ParticipanteService {
 
     public List<Object[]> obtenerPromediosGrupales() {
         return participanteRepository.findPromediosPorGrupo();
+    }
+
+    public List<Respuesta> obtenerRespuestasPorParticipante(Long id) {
+        return respuestaRepository.findByParticipanteIdOrderByNumeroPreguntaAsc(id);
     }
 }

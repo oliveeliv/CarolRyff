@@ -4,7 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e4ea8d95-b263-488c-8483-ae82be024116" name="Changes" comment="Estructura base del proyecto Ryff" />
+    <list default="true" id="e4ea8d95-b263-488c-8483-ae82be024116" name="Changes" comment="Estructura base del proyecto Ryff">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/service/ExcelService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/Controller/ResultadosController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/Controller/ResultadosController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/RyffApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/RyffApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/repository/ParticipanteRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/repository/ParticipanteRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/repository/RespuestaRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/repository/RespuestaRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/service/BienestarService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/service/BienestarService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/upiiz/service/ParticipanteService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/upiiz/service/ParticipanteService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/evaluacion.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/evaluacion.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/lista.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/templates/lista.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,8 +25,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Class" />
         <option value="HTML File" />
+        <option value="Class" />
       </list>
     </option>
   </component>

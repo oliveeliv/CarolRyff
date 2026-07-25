@@ -2,12 +2,17 @@ package org.upiiz.Controller;
 
 import org.upiiz.entities.Participante;
 import org.upiiz.models.Resultado;
+import org.upiiz.service.ExcelService;
 import org.upiiz.service.ParticipanteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,7 +22,9 @@ import java.util.stream.Collectors;
 public class ResultadosController {
 
     private final ParticipanteService participanteService;
+    private final ExcelService excelService;
 
+    // LISTA GENERAL
     @GetMapping
     public String listarResultados(
             @RequestParam(required = false) String grupo,
@@ -33,6 +40,9 @@ public class ResultadosController {
             model.addAttribute("grupos", participanteService.obtenerGrupos());
             model.addAttribute("anios", participanteService.obtenerAnios());
         } catch (Exception e) {
+            model.addAttribute("resultados", new ArrayList<>());
+            model.addAttribute("grupos", List.of());
+            model.addAttribute("anios", List.of());
             model.addAttribute("error", "Error: " + e.getMessage());
         }
         model.addAttribute("filtroAnio", anio);
@@ -40,6 +50,7 @@ public class ResultadosController {
         return "lista";
     }
 
+    // GRÁFICA GRUPAL
     @GetMapping("/comparativa-grupal")
     public String mostrarGraficaGrupal(Model model) {
         try {
@@ -50,52 +61,117 @@ public class ResultadosController {
 
             List<Object[]> promediosGrupos = new ArrayList<>();
             gruposMap.forEach((nombreGrupo, participantes) -> {
-                double avgAuto = avg(participantes, "autoaceptacion");
-                double avgRela = avg(participantes, "relacionesPositivas");
-                double avgAutoNo = avg(participantes, "autonomia");
-                double avgDom = avg(participantes, "dominioEntorno");
-                double avgProp = avg(participantes, "propositoVida");
-                double avgCrec = avg(participantes, "crecimientoPersonal");
-                promediosGrupos.add(new Object[]{nombreGrupo, avgAuto, avgRela, avgAutoNo, avgDom, avgProp, avgCrec});
+                promediosGrupos.add(new Object[]{
+                        nombreGrupo,
+                        avg(participantes, "autoaceptacion"),
+                        avg(participantes, "relacionesPositivas"),
+                        avg(participantes, "autonomia"),
+                        avg(participantes, "dominioEntorno"),
+                        avg(participantes, "propositoVida"),
+                        avg(participantes, "crecimientoPersonal")
+                });
             });
             model.addAttribute("promediosGrupos", promediosGrupos);
         } catch (Exception e) {
             model.addAttribute("promediosGrupos", new ArrayList<>());
+            model.addAttribute("error", "Error al cargar gráfica: " + e.getMessage());
         }
-        // CORRECCIÓN: Apunta al nombre real de tu archivo físico
         return "grafica_grupal";
     }
 
+    // DETALLE INDIVIDUAL
     @GetMapping("/{id}")
     public String verDetalleIndividual(@PathVariable Long id, Model model) {
         try {
             Optional<Resultado> resultado = participanteService.buscarResultadoPorId(id);
             if (resultado.isEmpty()) return "redirect:/resultados";
             model.addAttribute("resultado", resultado.get());
+            model.addAttribute("grupos", participanteService.obtenerGrupos());
             return "resultados";
         } catch (Exception e) {
             return "redirect:/resultados";
         }
     }
 
+    // EXPORTAR EXCEL
+    @GetMapping("/exportar-excel")
+    public ResponseEntity<byte[]> exportarExcel(
+            @RequestParam(required = false) String grupo,
+            @RequestParam(required = false) String anio) {
+        try {
+            List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
+            byte[] excelBytes = excelService.generarExcel(resultados);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentDispositionFormData("attachment", "bienestar_ryff.xlsx");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelBytes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // PROMEDIO POR GRUPO para gráfica radar individual
+    @GetMapping("/grupo-promedio")
+    @ResponseBody
+    public Map<String, Double> promedioPorGrupo(@RequestParam String grupo) {
+        Map<String, Double> promedios = new HashMap<>();
+        try {
+            List<Participante> participantes = participanteService
+                    .filtrarPorGrupoYAnio(grupo, null);
+
+            if (participantes.isEmpty()) return datosVacios();
+
+            promedios.put("autoaceptacion",      avg(participantes, "autoaceptacion"));
+            promedios.put("relacionesPositivas",  avg(participantes, "relacionesPositivas"));
+            promedios.put("autonomia",            avg(participantes, "autonomia"));
+            promedios.put("dominioEntorno",       avg(participantes, "dominioEntorno"));
+            promedios.put("propositoVida",        avg(participantes, "propositoVida"));
+            promedios.put("crecimientoPersonal",  avg(participantes, "crecimientoPersonal"));
+
+        } catch (Exception e) {
+            return datosVacios();
+        }
+        return promedios;
+    }
+
+    // ELIMINAR
+    @PostMapping("/eliminar/{id}")
+    public String eliminar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            participanteService.eliminar(id);
+            redirectAttributes.addFlashAttribute("exito", "Registro eliminado correctamente.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo eliminar: " + e.getMessage());
+        }
+        return "redirect:/resultados";
+    }
+
+    // HELPERS
     private double avg(List<Participante> lista, String dim) {
-        return lista.stream().mapToDouble(p -> {
-            return switch (dim) {
-                case "autoaceptacion"     -> p.getPromedioAutoaceptacion() != null ? p.getPromedioAutoaceptacion() : 0;
-                case "relacionesPositivas"-> p.getPromedioRelacionesPositivas() != null ? p.getPromedioRelacionesPositivas() : 0;
-                case "autonomia"          -> p.getPromedioAutonomia() != null ? p.getPromedioAutonomia() : 0;
-                case "dominioEntorno"     -> p.getPromedioDominioEntorno() != null ? p.getPromedioDominioEntorno() : 0;
-                case "propositoVida"      -> p.getPromedioPropositoVida() != null ? p.getPromedioPropositoVida() : 0;
-                case "crecimientoPersonal"-> p.getPromedioCrecimientoPersonal() != null ? p.getPromedioCrecimientoPersonal() : 0;
-                default -> 0;
-            };
+        return lista.stream().mapToDouble(p -> switch (dim) {
+            case "autoaceptacion"      -> p.getPromedioAutoaceptacion()      != null ? p.getPromedioAutoaceptacion()      : 0;
+            case "relacionesPositivas" -> p.getPromedioRelacionesPositivas() != null ? p.getPromedioRelacionesPositivas() : 0;
+            case "autonomia"           -> p.getPromedioAutonomia()           != null ? p.getPromedioAutonomia()           : 0;
+            case "dominioEntorno"      -> p.getPromedioDominioEntorno()      != null ? p.getPromedioDominioEntorno()      : 0;
+            case "propositoVida"       -> p.getPromedioPropositoVida()       != null ? p.getPromedioPropositoVida()       : 0;
+            case "crecimientoPersonal" -> p.getPromedioCrecimientoPersonal() != null ? p.getPromedioCrecimientoPersonal() : 0;
+            default -> 0;
         }).average().orElse(0);
     }
 
-    @PostMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        participanteService.eliminar(id);
-        redirectAttributes.addFlashAttribute("exito", "Registro eliminado.");
-        return "redirect:/resultados";
+    private Map<String, Double> datosVacios() {
+        Map<String, Double> m = new HashMap<>();
+        m.put("autoaceptacion", 0.0);
+        m.put("relacionesPositivas", 0.0);
+        m.put("autonomia", 0.0);
+        m.put("dominioEntorno", 0.0);
+        m.put("propositoVida", 0.0);
+        m.put("crecimientoPersonal", 0.0);
+        return m;
     }
 }
