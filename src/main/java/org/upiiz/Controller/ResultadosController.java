@@ -50,16 +50,19 @@ public class ResultadosController {
     // 2. EXPORTAR A EXCEL
     @GetMapping("/exportar-excel")
     public ResponseEntity<byte[]> exportarExcel(
-            @RequestParam(required = false) String grupo,
-            @RequestParam(required = false) String anio) {
+            @RequestParam(required = false, defaultValue = "") String grupo,
+            @RequestParam(required = false, defaultValue = "") String anio) {
         try {
-            List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
+            String g = grupo.isBlank() ? null : grupo;
+            String a = anio.isBlank() ? null : anio;
+
+            List<Resultado> resultados = participanteService.filtrarResultados(g, a);
             byte[] excelBytes = excelService.generarExcel(resultados);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-            headers.setContentDispositionFormData("attachment", "bienestar_ryff.xlsx");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bienestar_ryff.xlsx\"");
 
             return ResponseEntity.ok()
                     .headers(headers)
