@@ -10,6 +10,7 @@ import org.upiiz.entities.Participante;
 import org.upiiz.entities.Respuesta;
 import org.upiiz.models.Resultado;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Importante
 import lombok.RequiredArgsConstructor;
 
 import java.io.ByteArrayOutputStream;
@@ -78,6 +79,7 @@ public class ExcelService {
         PREGUNTAS.put(39, "Si me sintiera infeliz con mi situación de vida daría los pasos más eficaces para cambiarla.");
     }
 
+    @Transactional(readOnly = true) // <--- Mantiene abierta la sesión Hibernate para resolver colecciones LAZY
     public byte[] generarExcel(List<Resultado> resultados) throws IOException {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -223,6 +225,7 @@ public class ExcelService {
                 crearCeldaTxt(row, 0, p.getNombreCompleto(), txt);
                 crearCeldaTxt(row, 1, p.getGrupo(), txt);
 
+                // Con @Transactional aquí no lanzará LazyInitializationException
                 List<Respuesta> respuestas = p.getRespuestas() != null ? p.getRespuestas() : Collections.emptyList();
                 Map<Integer, Respuesta> mapaResp = new HashMap<>();
                 for (Respuesta resp : respuestas) {
@@ -361,7 +364,6 @@ public class ExcelService {
         CellStyle estTexto;
 
         Estilos(SXSSFWorkbook wb, DataFormat fmt) {
-            // Obtenemos el XSSFWorkbook subyacente para gestionar fuentes y colores de forma segura
             XSSFWorkbook xssfWb = wb.getXSSFWorkbook();
 
             cabecera = wb.createCellStyle();
