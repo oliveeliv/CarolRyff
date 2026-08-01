@@ -178,7 +178,6 @@
 </div>
 
 <script th:inline="javascript">
-    // Extraemos los datos de Thymeleaf a una constante de JS
     const INDIVIDUO = {
         nombre: [[${resultado.nombreCompleto}]],
         datos: [
@@ -200,7 +199,6 @@
         btn.classList.add('active');
 
         if (id === 'tab-graficas') {
-            // Un pequeño delay para asegurar que el canvas es visible antes de dibujar
             setTimeout(initRadar, 50);
         }
     }
@@ -244,12 +242,10 @@
         });
     }
 
-    // Animación del anillo global al cargar
     window.onload = () => {
         const ring = document.getElementById('globalRing');
         const scoreStr = document.querySelector('.ring-number').textContent;
         const score = parseFloat(scoreStr);
-        // Circunferencia = 2 * PI * r (r=48) -> ~301.6
         const offset = 301.6 * (1 - score / 6);
         setTimeout(() => {
             ring.style.strokeDashoffset = offset;

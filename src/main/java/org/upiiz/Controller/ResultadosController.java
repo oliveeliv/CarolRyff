@@ -1,4 +1,4 @@
-package org.upiiz.Controller;
+package org.upiiz.controller;
 
 import org.upiiz.entities.Participante;
 import org.upiiz.models.Resultado;
@@ -24,18 +24,15 @@ public class ResultadosController {
     private final ParticipanteService participanteService;
     private final ExcelService excelService;
 
-    // 1. LISTA GENERAL (Apunta a "resultados.html")
+    // 1. LISTA GENERAL
     @GetMapping
     public String listarResultados(
             @RequestParam(required = false) String grupo,
             @RequestParam(required = false) String anio,
             Model model) {
         try {
-            List<Resultado> resultados = new ArrayList<>();
-            for (Participante p : participanteService.filtrarPorGrupoYAnio(grupo, anio)) {
-                participanteService.buscarResultadoPorId(p.getId())
-                        .ifPresent(resultados::add);
-            }
+            // Una sola llamada en lugar de N queries
+            List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
             model.addAttribute("resultados", resultados);
             model.addAttribute("grupos", participanteService.obtenerGrupos());
             model.addAttribute("anios", participanteService.obtenerAnios());
@@ -45,12 +42,9 @@ public class ResultadosController {
             model.addAttribute("anios", List.of());
             model.addAttribute("error", "Error: " + e.getMessage());
         }
-
         model.addAttribute("filtroAnio", anio != null ? anio : "");
         model.addAttribute("filtroGrupo", grupo != null ? grupo : "");
-
-        // CAMBIO AQUÍ: Ahora retorna "resultados" para cargar la plantilla con el botón de Excel
-        return "resultados";
+        return "lista";
     }
 
     // 2. EXPORTAR A EXCEL
@@ -112,9 +106,7 @@ public class ResultadosController {
             if (resultado.isEmpty()) return "redirect:/resultados";
             model.addAttribute("resultado", resultado.get());
             model.addAttribute("grupos", participanteService.obtenerGrupos());
-
-            // Si la vista del detalle individual es evaluacion.html:
-            return "evaluacion";
+            return "resultados";
         } catch (Exception e) {
             return "redirect:/resultados";
         }
@@ -124,24 +116,22 @@ public class ResultadosController {
     @GetMapping("/grupo-promedio")
     @ResponseBody
     public Map<String, Double> promedioPorGrupo(@RequestParam String grupo) {
-        Map<String, Double> promedios = new HashMap<>();
         try {
             List<Participante> participantes = participanteService
                     .filtrarPorGrupoYAnio(grupo, null);
-
             if (participantes.isEmpty()) return datosVacios();
 
+            Map<String, Double> promedios = new HashMap<>();
             promedios.put("autoaceptacion",      avg(participantes, "autoaceptacion"));
             promedios.put("relacionesPositivas",  avg(participantes, "relacionesPositivas"));
             promedios.put("autonomia",            avg(participantes, "autonomia"));
             promedios.put("dominioEntorno",       avg(participantes, "dominioEntorno"));
             promedios.put("propositoVida",        avg(participantes, "propositoVida"));
             promedios.put("crecimientoPersonal",  avg(participantes, "crecimientoPersonal"));
-
+            return promedios;
         } catch (Exception e) {
             return datosVacios();
         }
-        return promedios;
     }
 
     // 6. ELIMINAR
