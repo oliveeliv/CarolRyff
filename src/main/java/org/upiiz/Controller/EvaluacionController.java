@@ -1,4 +1,4 @@
-package org.upiiz.Controller;
+package org.upiiz.controller;
 
 import org.upiiz.entities.Participante;
 import org.upiiz.models.Evaluacion;
@@ -9,9 +9,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Controller
 @RequestMapping("/evaluacion")
 @RequiredArgsConstructor
@@ -21,52 +18,34 @@ public class EvaluacionController {
 
     @GetMapping("/nueva")
     public String mostrarFormulario(Model model) {
-        // CORRECCIÓN: Aseguramos que el objeto 'form' sea el que el HTML espera
-        model.addAttribute("form", new Evaluacion());
-        // Enviamos la constante de preguntas para que el th:each las renderice
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", new Evaluacion());
+        }
         model.addAttribute("preguntas", BienestarService.PREGUNTAS);
         return "evaluacion";
     }
 
     @PostMapping("/guardar")
     public String guardarEvaluacion(
-            @RequestParam String nombreCompleto,
-            @RequestParam String sexo,
-            @RequestParam Integer edad,
-            @RequestParam String anioEscolar,
-            @RequestParam String grupo,
-            @RequestParam Map<String, String> allParams,
+            @ModelAttribute("form") Evaluacion form,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Map<Integer, Integer> respuestasMap = new HashMap<>();
-            for (int i = 1; i <= 39; i++) {
-                String key = "respuestas[" + i + "]";
-                String val = allParams.get(key);
-                if (val != null && !val.isBlank()) {
-                    respuestasMap.put(i, Integer.parseInt(val));
-                }
-            }
-
-            if (respuestasMap.size() < 39) {
-                redirectAttributes.addFlashAttribute("error", "Por favor responde todas las preguntas.");
+            // Validar que el map de respuestas no venga nulo y tenga las 39 preguntas
+            if (form.getRespuestas() == null || form.getRespuestas().size() < 39) {
+                redirectAttributes.addFlashAttribute("error", "Por favor responde todas las preguntas del cuestionario.");
+                redirectAttributes.addFlashAttribute("form", form);
                 return "redirect:/evaluacion/nueva";
             }
 
-            Evaluacion form = new Evaluacion();
-            form.setNombreCompleto(nombreCompleto);
-            form.setSexo(sexo);
-            form.setEdad(edad);
-            form.setAnioEscolar(anioEscolar);
-            form.setGrupo(grupo);
-            form.setRespuestas(respuestasMap);
-
             Participante guardado = bienestarService.guardarEvaluacion(form);
-            redirectAttributes.addFlashAttribute("exito", "Evaluación guardada.");
+            redirectAttributes.addFlashAttribute("exito", "Evaluación guardada correctamente.");
             return "redirect:/resultados/" + guardado.getId();
 
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            // Captura cualquier error de servicio o de BD evitando la pantalla de HTTP 500
+            redirectAttributes.addFlashAttribute("error", "Error al procesar la evaluación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("form", form);
             return "redirect:/evaluacion/nueva";
         }
     }

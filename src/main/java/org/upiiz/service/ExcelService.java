@@ -5,6 +5,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.upiiz.entities.Participante;
 import org.upiiz.entities.Respuesta;
 import org.upiiz.models.Resultado;
@@ -78,14 +79,12 @@ public class ExcelService {
     }
 
     public byte[] generarExcel(List<Resultado> resultados) throws IOException {
-        // SXSSFWorkbook guarda en disco temporalmente, reduciendo uso de RAM
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             DataFormat format = workbook.createDataFormat();
             Estilos e = new Estilos(workbook, format);
 
-            // Cargar participantes de una forma segura y optimizada
             List<Participante> participantes;
             try {
                 participantes = participanteService.listarTodos();
@@ -98,7 +97,7 @@ public class ExcelService {
             crearHojaPromediosGrupales(workbook, e, participantes);
 
             workbook.write(out);
-            workbook.dispose(); // Elimina temporales
+            workbook.dispose();
             return out.toByteArray();
         }
     }
@@ -362,25 +361,28 @@ public class ExcelService {
         CellStyle estTexto;
 
         Estilos(SXSSFWorkbook wb, DataFormat fmt) {
+            // Obtenemos el XSSFWorkbook subyacente para gestionar fuentes y colores de forma segura
+            XSSFWorkbook xssfWb = wb.getXSSFWorkbook();
+
             cabecera = wb.createCellStyle();
-            cabecera.setFillForegroundColor(color(wb, COLOR_NAVY_DARK));
+            cabecera.setFillForegroundColor(color(COLOR_NAVY_DARK));
             cabecera.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             cabecera.setAlignment(HorizontalAlignment.CENTER);
             cabecera.setVerticalAlignment(VerticalAlignment.CENTER);
-            cabecera.setFont(fuente(wb, COLOR_GOLD, true, 13));
+            cabecera.setFont(fuente(xssfWb, COLOR_GOLD, true, 13));
 
             encabezado = wb.createCellStyle();
-            encabezado.setFillForegroundColor(color(wb, COLOR_NAVY));
+            encabezado.setFillForegroundColor(color(COLOR_NAVY));
             encabezado.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             encabezado.setAlignment(HorizontalAlignment.CENTER);
             encabezado.setVerticalAlignment(VerticalAlignment.CENTER);
             encabezado.setWrapText(true);
             encabezado.setBorderBottom(BorderStyle.MEDIUM);
-            encabezado.setFont(fuente(wb, COLOR_CREAM, true, 10));
+            encabezado.setFont(fuente(xssfWb, COLOR_CREAM, true, 10));
 
             encabezadoInverso = wb.createCellStyle();
             encabezadoInverso.cloneStyleFrom(encabezado);
-            encabezadoInverso.setFillForegroundColor(color(wb, COLOR_WINE));
+            encabezadoInverso.setFillForegroundColor(color(COLOR_WINE));
 
             dato = wb.createCellStyle();
             dato.setAlignment(HorizontalAlignment.CENTER);
@@ -388,11 +390,11 @@ public class ExcelService {
             dato.setBorderBottom(BorderStyle.THIN);
             dato.setBorderLeft(BorderStyle.THIN);
             dato.setBorderRight(BorderStyle.THIN);
-            dato.setFont(fuente(wb, null, false, 10));
+            dato.setFont(fuente(xssfWb, null, false, 10));
 
             datoAlt = wb.createCellStyle();
             datoAlt.cloneStyleFrom(dato);
-            datoAlt.setFillForegroundColor(color(wb, COLOR_CREAM_ALT));
+            datoAlt.setFillForegroundColor(color(COLOR_CREAM_ALT));
             datoAlt.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             num = wb.createCellStyle();
@@ -406,32 +408,32 @@ public class ExcelService {
             numInverso = wb.createCellStyle();
             numInverso.cloneStyleFrom(num);
             numInverso.setFillForegroundColor(
-                    color(wb, new byte[]{(byte)250,(byte)235,(byte)237}));
+                    color(new byte[]{(byte)250,(byte)235,(byte)237}));
             numInverso.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             numInverso.setDataFormat(fmt.getFormat("0"));
 
             numAltInverso = wb.createCellStyle();
             numAltInverso.cloneStyleFrom(numInverso);
             numAltInverso.setFillForegroundColor(
-                    color(wb, new byte[]{(byte)245,(byte)225,(byte)228}));
+                    color(new byte[]{(byte)245,(byte)225,(byte)228}));
 
             global = wb.createCellStyle();
             global.cloneStyleFrom(num);
-            global.setFillForegroundColor(color(wb, COLOR_CREAM_DARK));
+            global.setFillForegroundColor(color(COLOR_CREAM_DARK));
             global.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            global.setFont(fuente(wb, COLOR_NAVY_DARK, true, 11));
+            global.setFont(fuente(xssfWb, COLOR_NAVY_DARK, true, 11));
             global.setDataFormat(fmt.getFormat("0.00"));
 
             nivel = wb.createCellStyle();
             nivel.cloneStyleFrom(dato);
-            nivel.setFont(fuente(wb, null, true, 10));
+            nivel.setFont(fuente(xssfWb, null, true, 10));
 
             promLabel = wb.createCellStyle();
-            promLabel.setFillForegroundColor(color(wb, COLOR_NAVY));
+            promLabel.setFillForegroundColor(color(COLOR_NAVY));
             promLabel.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             promLabel.setAlignment(HorizontalAlignment.RIGHT);
             promLabel.setVerticalAlignment(VerticalAlignment.CENTER);
-            promLabel.setFont(fuente(wb, COLOR_GOLD, true, 10));
+            promLabel.setFont(fuente(xssfWb, COLOR_GOLD, true, 10));
 
             promNum = wb.createCellStyle();
             promNum.cloneStyleFrom(promLabel);
@@ -444,13 +446,13 @@ public class ExcelService {
             estTexto.setAlignment(HorizontalAlignment.LEFT);
         }
 
-        private static XSSFColor color(SXSSFWorkbook wb, byte[] rgb) {
+        private static XSSFColor color(byte[] rgb) {
             return new XSSFColor(rgb, null);
         }
 
-        private static XSSFFont fuente(SXSSFWorkbook wb, byte[] colorRgb,
+        private static XSSFFont fuente(XSSFWorkbook xssfWb, byte[] colorRgb,
                                        boolean bold, int size) {
-            XSSFFont f = (XSSFFont) wb.createFont();
+            XSSFFont f = xssfWb.createFont();
             f.setBold(bold);
             f.setFontHeightInPoints((short) size);
             if (colorRgb != null) f.setColor(new XSSFColor(colorRgb, null));
