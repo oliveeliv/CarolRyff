@@ -24,7 +24,7 @@ public class ResultadosController {
     private final ParticipanteService participanteService;
     private final ExcelService excelService;
 
-    // 1. LISTA GENERAL (Asegúrate que tu archivo HTML en templates se llame "lista.html")
+    // 1. LISTA GENERAL (Apunta a "resultados.html")
     @GetMapping
     public String listarResultados(
             @RequestParam(required = false) String grupo,
@@ -46,11 +46,11 @@ public class ResultadosController {
             model.addAttribute("error", "Error: " + e.getMessage());
         }
 
-        // Se controlan valores nulos para evitar errores en las expresiones th:href de Thymeleaf
         model.addAttribute("filtroAnio", anio != null ? anio : "");
         model.addAttribute("filtroGrupo", grupo != null ? grupo : "");
 
-        return "lista";
+        // CAMBIO AQUÍ: Ahora retorna "resultados" para cargar la plantilla con el botón de Excel
+        return "resultados";
     }
 
     // 2. EXPORTAR A EXCEL
@@ -112,7 +112,9 @@ public class ResultadosController {
             if (resultado.isEmpty()) return "redirect:/resultados";
             model.addAttribute("resultado", resultado.get());
             model.addAttribute("grupos", participanteService.obtenerGrupos());
-            return "resultados";
+
+            // Si la vista del detalle individual es evaluacion.html:
+            return "evaluacion";
         } catch (Exception e) {
             return "redirect:/resultados";
         }
@@ -154,7 +156,7 @@ public class ResultadosController {
         return "redirect:/resultados";
     }
 
-    // MÉTODOS AUXILIARES (HELPERS)
+    // HELPERS
     private double avg(List<Participante> lista, String dim) {
         return lista.stream().mapToDouble(p -> switch (dim) {
             case "autoaceptacion"      -> p.getPromedioAutoaceptacion()      != null ? p.getPromedioAutoaceptacion()      : 0;
