@@ -2,7 +2,9 @@ package org.upiiz.service;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.upiiz.entities.Participante;
 import org.upiiz.entities.Respuesta;
 import org.upiiz.models.Resultado;
@@ -76,28 +78,33 @@ public class ExcelService {
     }
 
     public byte[] generarExcel(List<Resultado> resultados) throws IOException {
-        try (XSSFWorkbook workbook = new XSSFWorkbook();
+        // SXSSFWorkbook guarda en disco temporalmente, reduciendo uso de RAM
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             DataFormat format = workbook.createDataFormat();
             Estilos e = new Estilos(workbook, format);
 
-            List<Participante> participantes = resultados.stream()
-                    .map(r -> participanteService.buscarPorId(r.getParticipanteId()).orElse(null))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            // Cargar participantes de una forma segura y optimizada
+            List<Participante> participantes;
+            try {
+                participantes = participanteService.listarTodos();
+            } catch (Exception ex) {
+                participantes = Collections.emptyList();
+            }
 
             crearHojaResumen(workbook, e, resultados);
             crearHojaRespuestas(workbook, e, participantes);
             crearHojaPromediosGrupales(workbook, e, participantes);
 
             workbook.write(out);
+            workbook.dispose(); // Elimina temporales
             return out.toByteArray();
         }
     }
 
-    private void crearHojaResumen(XSSFWorkbook wb, Estilos e, List<Resultado> resultados) {
-        XSSFSheet sheet = wb.createSheet("1. Resumen Promedios");
+    private void crearHojaResumen(SXSSFWorkbook wb, Estilos e, List<Resultado> resultados) {
+        Sheet sheet = wb.createSheet("1. Resumen Promedios");
 
         Row filaTitulo = sheet.createRow(0);
         filaTitulo.setHeightInPoints(32);
@@ -119,30 +126,32 @@ public class ExcelService {
         }
 
         int nf = 2;
-        for (Resultado r : resultados) {
-            Row row = sheet.createRow(nf);
-            row.setHeightInPoints(20);
-            boolean alt = nf % 2 == 0;
-            XSSFCellStyle txt = alt ? e.datoAlt : e.dato;
-            XSSFCellStyle num = alt ? e.numAlt  : e.num;
+        if (resultados != null) {
+            for (Resultado r : resultados) {
+                Row row = sheet.createRow(nf);
+                row.setHeightInPoints(20);
+                boolean alt = nf % 2 == 0;
+                CellStyle txt = alt ? e.datoAlt : e.dato;
+                CellStyle num = alt ? e.numAlt  : e.num;
 
-            crearCeldaTxt(row, 0, r.getNombreCompleto(), txt);
-            crearCeldaTxt(row, 1, r.getSexo(), txt);
-            crearCeldaNum(row, 2, r.getEdad() != null ? r.getEdad() : 0, num);
-            crearCeldaTxt(row, 3, r.getAnioEscolar(), txt);
-            crearCeldaTxt(row, 4, r.getGrupo(), txt);
-            crearCeldaNum(row, 5,  safe(r.getAutoaceptacion()), num);
-            crearCeldaNum(row, 6,  safe(r.getRelacionesPositivas()), num);
-            crearCeldaNum(row, 7,  safe(r.getAutonomia()), num);
-            crearCeldaNum(row, 8,  safe(r.getDominioEntorno()), num);
-            crearCeldaNum(row, 9,  safe(r.getPropositoVida()), num);
-            crearCeldaNum(row, 10, safe(r.getCrecimientoPersonal()), num);
-            crearCeldaNum(row, 11, safe(r.getBienestarGlobal()), e.global);
-            crearCeldaTxt(row, 12, r.getNivelBienestarGlobal(), e.nivel);
-            nf++;
+                crearCeldaTxt(row, 0, r.getNombreCompleto(), txt);
+                crearCeldaTxt(row, 1, r.getSexo(), txt);
+                crearCeldaNum(row, 2, r.getEdad() != null ? r.getEdad() : 0, num);
+                crearCeldaTxt(row, 3, r.getAnioEscolar(), txt);
+                crearCeldaTxt(row, 4, r.getGrupo(), txt);
+                crearCeldaNum(row, 5,  safe(r.getAutoaceptacion()), num);
+                crearCeldaNum(row, 6,  safe(r.getRelacionesPositivas()), num);
+                crearCeldaNum(row, 7,  safe(r.getAutonomia()), num);
+                crearCeldaNum(row, 8,  safe(r.getDominioEntorno()), num);
+                crearCeldaNum(row, 9,  safe(r.getPropositoVida()), num);
+                crearCeldaNum(row, 10, safe(r.getCrecimientoPersonal()), num);
+                crearCeldaNum(row, 11, safe(r.getBienestarGlobal()), e.global);
+                crearCeldaTxt(row, 12, r.getNivelBienestarGlobal(), e.nivel);
+                nf++;
+            }
         }
 
-        if (!resultados.isEmpty()) {
+        if (resultados != null && !resultados.isEmpty()) {
             Row fp = sheet.createRow(nf);
             fp.setHeightInPoints(22);
             Cell lbl = fp.createCell(0);
@@ -166,9 +175,8 @@ public class ExcelService {
         sheet.createFreezePane(0, 2);
     }
 
-    private void crearHojaRespuestas(XSSFWorkbook wb, Estilos e,
-                                     List<Participante> participantes) {
-        XSSFSheet sheet = wb.createSheet("2. Respuestas por Pregunta");
+    private void crearHojaRespuestas(SXSSFWorkbook wb, Estilos e, List<Participante> participantes) {
+        Sheet sheet = wb.createSheet("2. Respuestas por Pregunta");
 
         Row filaTitulo = sheet.createRow(0);
         filaTitulo.setHeightInPoints(32);
@@ -206,35 +214,39 @@ public class ExcelService {
         }
 
         int nf = 3;
-        for (Participante p : participantes) {
-            Row row = sheet.createRow(nf);
-            row.setHeightInPoints(20);
-            boolean alt = nf % 2 == 0;
-            XSSFCellStyle txt = alt ? e.datoAlt : e.dato;
+        if (participantes != null) {
+            for (Participante p : participantes) {
+                Row row = sheet.createRow(nf);
+                row.setHeightInPoints(20);
+                boolean alt = nf % 2 == 0;
+                CellStyle txt = alt ? e.datoAlt : e.dato;
 
-            crearCeldaTxt(row, 0, p.getNombreCompleto(), txt);
-            crearCeldaTxt(row, 1, p.getGrupo(), txt);
+                crearCeldaTxt(row, 0, p.getNombreCompleto(), txt);
+                crearCeldaTxt(row, 1, p.getGrupo(), txt);
 
-            // Manejo seguro de la lista de respuestas cargadas
-            List<Respuesta> respuestas = p.getRespuestas() != null ? p.getRespuestas() : Collections.emptyList();
-            Map<Integer, Respuesta> mapaResp = respuestas.stream()
-                    .filter(r -> r.getNumeroPregunta() != null)
-                    .collect(Collectors.toMap(Respuesta::getNumeroPregunta, r -> r, (r1, r2) -> r1));
-
-            for (int i = 1; i <= 39; i++) {
-                Cell c = row.createCell(i + 1);
-                Respuesta resp = mapaResp.get(i);
-                if (resp != null && resp.getValorProcesado() != null) {
-                    c.setCellValue(resp.getValorProcesado());
-                    c.setCellStyle(INVERSAS.contains(i)
-                            ? (alt ? e.numAltInverso : e.numInverso)
-                            : (alt ? e.numAlt : e.num));
-                } else {
-                    c.setCellValue("-");
-                    c.setCellStyle(txt);
+                List<Respuesta> respuestas = p.getRespuestas() != null ? p.getRespuestas() : Collections.emptyList();
+                Map<Integer, Respuesta> mapaResp = new HashMap<>();
+                for (Respuesta resp : respuestas) {
+                    if (resp != null && resp.getNumeroPregunta() != null) {
+                        mapaResp.putIfAbsent(resp.getNumeroPregunta(), resp);
+                    }
                 }
+
+                for (int i = 1; i <= 39; i++) {
+                    Cell c = row.createCell(i + 1);
+                    Respuesta resp = mapaResp.get(i);
+                    if (resp != null && resp.getValorProcesado() != null) {
+                        c.setCellValue(resp.getValorProcesado());
+                        c.setCellStyle(INVERSAS.contains(i)
+                                ? (alt ? e.numAltInverso : e.numInverso)
+                                : (alt ? e.numAlt : e.num));
+                    } else {
+                        c.setCellValue("-");
+                        c.setCellStyle(txt);
+                    }
+                }
+                nf++;
             }
-            nf++;
         }
 
         sheet.setColumnWidth(0, 8000);
@@ -243,9 +255,8 @@ public class ExcelService {
         sheet.createFreezePane(2, 3);
     }
 
-    private void crearHojaPromediosGrupales(XSSFWorkbook wb, Estilos e,
-                                            List<Participante> participantes) {
-        XSSFSheet sheet = wb.createSheet("3. Promedios por Grupo");
+    private void crearHojaPromediosGrupales(SXSSFWorkbook wb, Estilos e, List<Participante> participantes) {
+        Sheet sheet = wb.createSheet("3. Promedios por Grupo");
 
         Row filaTitulo = sheet.createRow(0);
         filaTitulo.setHeightInPoints(32);
@@ -265,8 +276,8 @@ public class ExcelService {
             c.setCellStyle(e.encabezado);
         }
 
-        Map<String, List<Participante>> porGrupo = participantes.stream()
-                .filter(p -> p.getGrupo() != null)
+        Map<String, List<Participante>> porGrupo = (participantes != null ? participantes : Collections.<Participante>emptyList()).stream()
+                .filter(p -> p != null && p.getGrupo() != null)
                 .collect(Collectors.groupingBy(
                         Participante::getGrupo,
                         TreeMap::new,
@@ -279,8 +290,8 @@ public class ExcelService {
             Row row = sheet.createRow(nf);
             row.setHeightInPoints(22);
             boolean alt = nf % 2 == 0;
-            XSSFCellStyle txt = alt ? e.datoAlt : e.dato;
-            XSSFCellStyle num = alt ? e.numAlt  : e.num;
+            CellStyle txt = alt ? e.datoAlt : e.dato;
+            CellStyle num = alt ? e.numAlt  : e.num;
 
             crearCeldaTxt(row, 0, grupo, txt);
             crearCeldaNum(row, 1, lista.size(), num);
@@ -315,6 +326,7 @@ public class ExcelService {
     }
 
     private double avgDim(List<Participante> lista, String dim) {
+        if (lista == null || lista.isEmpty()) return 0.0;
         return lista.stream().mapToDouble(p -> switch (dim) {
             case "autoaceptacion"      -> safe(p.getPromedioAutoaceptacion());
             case "relacionesPositivas" -> safe(p.getPromedioRelacionesPositivas());
@@ -329,27 +341,27 @@ public class ExcelService {
 
     private double safe(Double v) { return v != null ? v : 0.0; }
 
-    private void crearCeldaTxt(Row row, int col, String val, XSSFCellStyle style) {
+    private void crearCeldaTxt(Row row, int col, String val, CellStyle style) {
         Cell c = row.createCell(col);
         c.setCellValue(val != null ? val : "");
         c.setCellStyle(style);
     }
 
-    private void crearCeldaNum(Row row, int col, double val, XSSFCellStyle style) {
+    private void crearCeldaNum(Row row, int col, double val, CellStyle style) {
         Cell c = row.createCell(col);
         c.setCellValue(val);
         c.setCellStyle(style);
     }
 
     private static class Estilos {
-        XSSFCellStyle cabecera, encabezado, encabezadoInverso;
-        XSSFCellStyle dato, datoAlt, num, numAlt;
-        XSSFCellStyle numInverso, numAltInverso;
-        XSSFCellStyle global, nivel;
-        XSSFCellStyle promLabel, promNum;
-        XSSFCellStyle estTexto;
+        CellStyle cabecera, encabezado, encabezadoInverso;
+        CellStyle dato, datoAlt, num, numAlt;
+        CellStyle numInverso, numAltInverso;
+        CellStyle global, nivel;
+        CellStyle promLabel, promNum;
+        CellStyle estTexto;
 
-        Estilos(XSSFWorkbook wb, DataFormat fmt) {
+        Estilos(SXSSFWorkbook wb, DataFormat fmt) {
             cabecera = wb.createCellStyle();
             cabecera.setFillForegroundColor(color(wb, COLOR_NAVY_DARK));
             cabecera.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -432,13 +444,13 @@ public class ExcelService {
             estTexto.setAlignment(HorizontalAlignment.LEFT);
         }
 
-        private static XSSFColor color(XSSFWorkbook wb, byte[] rgb) {
+        private static XSSFColor color(SXSSFWorkbook wb, byte[] rgb) {
             return new XSSFColor(rgb, null);
         }
 
-        private static XSSFFont fuente(XSSFWorkbook wb, byte[] colorRgb,
+        private static XSSFFont fuente(SXSSFWorkbook wb, byte[] colorRgb,
                                        boolean bold, int size) {
-            XSSFFont f = wb.createFont();
+            XSSFFont f = (XSSFFont) wb.createFont();
             f.setBold(bold);
             f.setFontHeightInPoints((short) size);
             if (colorRgb != null) f.setColor(new XSSFColor(colorRgb, null));
