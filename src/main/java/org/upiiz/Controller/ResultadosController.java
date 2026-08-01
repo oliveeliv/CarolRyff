@@ -24,7 +24,7 @@ public class ResultadosController {
     private final ParticipanteService participanteService;
     private final ExcelService excelService;
 
-    // LISTA GENERAL
+    // 1. LISTA GENERAL (Asegúrate que tu archivo HTML en templates se llame "lista.html")
     @GetMapping
     public String listarResultados(
             @RequestParam(required = false) String grupo,
@@ -45,12 +45,37 @@ public class ResultadosController {
             model.addAttribute("anios", List.of());
             model.addAttribute("error", "Error: " + e.getMessage());
         }
-        model.addAttribute("filtroAnio", anio);
-        model.addAttribute("filtroGrupo", grupo);
+
+        // Se controlan valores nulos para evitar errores en las expresiones th:href de Thymeleaf
+        model.addAttribute("filtroAnio", anio != null ? anio : "");
+        model.addAttribute("filtroGrupo", grupo != null ? grupo : "");
+
         return "lista";
     }
 
-    // GRÁFICA GRUPAL
+    // 2. EXPORTAR A EXCEL
+    @GetMapping("/exportar-excel")
+    public ResponseEntity<byte[]> exportarExcel(
+            @RequestParam(required = false) String grupo,
+            @RequestParam(required = false) String anio) {
+        try {
+            List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
+            byte[] excelBytes = excelService.generarExcel(resultados);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentDispositionFormData("attachment", "bienestar_ryff.xlsx");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(excelBytes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // 3. GRÁFICA GRUPAL
     @GetMapping("/comparativa-grupal")
     public String mostrarGraficaGrupal(Model model) {
         try {
@@ -79,7 +104,7 @@ public class ResultadosController {
         return "grafica_grupal";
     }
 
-    // DETALLE INDIVIDUAL
+    // 4. DETALLE INDIVIDUAL
     @GetMapping("/{id}")
     public String verDetalleIndividual(@PathVariable Long id, Model model) {
         try {
@@ -93,29 +118,7 @@ public class ResultadosController {
         }
     }
 
-    // EXPORTAR EXCEL
-    @GetMapping("/exportar-excel")
-    public ResponseEntity<byte[]> exportarExcel(
-            @RequestParam(required = false) String grupo,
-            @RequestParam(required = false) String anio) {
-        try {
-            List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
-            byte[] excelBytes = excelService.generarExcel(resultados);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-            headers.setContentDispositionFormData("attachment", "bienestar_ryff.xlsx");
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(excelBytes);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    // PROMEDIO POR GRUPO para gráfica radar individual
+    // 5. PROMEDIO POR GRUPO (API JSON para radar individual)
     @GetMapping("/grupo-promedio")
     @ResponseBody
     public Map<String, Double> promedioPorGrupo(@RequestParam String grupo) {
@@ -139,7 +142,7 @@ public class ResultadosController {
         return promedios;
     }
 
-    // ELIMINAR
+    // 6. ELIMINAR
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -151,7 +154,7 @@ public class ResultadosController {
         return "redirect:/resultados";
     }
 
-    // HELPERS
+    // MÉTODOS AUXILIARES (HELPERS)
     private double avg(List<Participante> lista, String dim) {
         return lista.stream().mapToDouble(p -> switch (dim) {
             case "autoaceptacion"      -> p.getPromedioAutoaceptacion()      != null ? p.getPromedioAutoaceptacion()      : 0;
