@@ -32,10 +32,11 @@ public class ResultadosController {
             Model model) {
         try {
             List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
-            model.addAttribute("resultados", resultados);
+            model.addAttribute("resultados", resultados != null ? resultados : new ArrayList<>());
             model.addAttribute("grupos", participanteService.obtenerGrupos());
             model.addAttribute("anios", participanteService.obtenerAnios());
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("resultados", new ArrayList<>());
             model.addAttribute("grupos", List.of());
             model.addAttribute("anios", List.of());
@@ -52,10 +53,14 @@ public class ResultadosController {
             @RequestParam(required = false, defaultValue = "") String grupo,
             @RequestParam(required = false, defaultValue = "") String anio) {
         try {
-            String g = grupo.isBlank() ? null : grupo;
-            String a = anio.isBlank() ? null : anio;
+            String g = (grupo != null && !grupo.isBlank()) ? grupo : null;
+            String a = (anio != null && !anio.isBlank()) ? anio : null;
 
             List<Resultado> resultados = participanteService.filtrarResultados(g, a);
+            if (resultados == null) {
+                resultados = new ArrayList<>();
+            }
+
             byte[] excelBytes = excelService.generarExcel(resultados);
 
             HttpHeaders headers = new HttpHeaders();
@@ -67,6 +72,8 @@ public class ResultadosController {
                     .headers(headers)
                     .body(excelBytes);
         } catch (Exception e) {
+            System.err.println("❌ EXCEPCIÓN AL EXPORTAR EXCEL:");
+            e.printStackTrace(); // Imprime el error exacto en Render
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -76,8 +83,10 @@ public class ResultadosController {
     public String mostrarGraficaGrupal(Model model) {
         try {
             List<Participante> todos = participanteService.filtrarPorGrupoYAnio(null, null);
+            if (todos == null) todos = new ArrayList<>();
+
             Map<String, List<Participante>> gruposMap = todos.stream()
-                    .filter(p -> p.getGrupo() != null)
+                    .filter(p -> p != null && p.getGrupo() != null)
                     .collect(Collectors.groupingBy(Participante::getGrupo));
 
             List<Object[]> promediosGrupos = new ArrayList<>();
@@ -94,6 +103,7 @@ public class ResultadosController {
             });
             model.addAttribute("promediosGrupos", promediosGrupos);
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("promediosGrupos", new ArrayList<>());
             model.addAttribute("error", "Error al cargar gráfica: " + e.getMessage());
         }
@@ -107,7 +117,7 @@ public class ResultadosController {
         try {
             List<Participante> participantes = participanteService
                     .filtrarPorGrupoYAnio(grupo, null);
-            if (participantes.isEmpty()) return datosVacios();
+            if (participantes == null || participantes.isEmpty()) return datosVacios();
 
             Map<String, Double> promedios = new HashMap<>();
             promedios.put("autoaceptacion",      avg(participantes, "autoaceptacion"));
@@ -118,11 +128,12 @@ public class ResultadosController {
             promedios.put("crecimientoPersonal",  avg(participantes, "crecimientoPersonal"));
             return promedios;
         } catch (Exception e) {
+            e.printStackTrace();
             return datosVacios();
         }
     }
 
-    // 5. DETALLE INDIVIDUAL (Colocada al final para no colisionar con rutas anteriores)
+    // 5. DETALLE INDIVIDUAL
     @GetMapping("/{id}")
     public String verDetalleIndividual(@PathVariable Long id, Model model) {
         try {
@@ -132,6 +143,7 @@ public class ResultadosController {
             model.addAttribute("grupos", participanteService.obtenerGrupos());
             return "resultados";
         } catch (Exception e) {
+            e.printStackTrace();
             return "redirect:/resultados";
         }
     }
@@ -143,6 +155,7 @@ public class ResultadosController {
             participanteService.eliminar(id);
             redirectAttributes.addFlashAttribute("exito", "Registro eliminado correctamente.");
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "No se pudo eliminar: " + e.getMessage());
         }
         return "redirect:/resultados";
@@ -150,6 +163,7 @@ public class ResultadosController {
 
     // HELPERS
     private double avg(List<Participante> lista, String dim) {
+        if (lista == null || lista.isEmpty()) return 0;
         return lista.stream().mapToDouble(p -> switch (dim) {
             case "autoaceptacion"      -> p.getPromedioAutoaceptacion()      != null ? p.getPromedioAutoaceptacion()      : 0;
             case "relacionesPositivas" -> p.getPromedioRelacionesPositivas() != null ? p.getPromedioRelacionesPositivas() : 0;
