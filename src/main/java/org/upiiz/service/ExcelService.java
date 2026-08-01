@@ -76,23 +76,24 @@ public class ExcelService {
     }
 
     public byte[] generarExcel(List<Resultado> resultados) throws IOException {
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        DataFormat format = workbook.createDataFormat();
-        Estilos e = new Estilos(workbook, format);
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-        List<Participante> participantes = resultados.stream()
-                .map(r -> participanteService.buscarPorId(r.getParticipanteId()).orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            DataFormat format = workbook.createDataFormat();
+            Estilos e = new Estilos(workbook, format);
 
-        crearHojaResumen(workbook, e, resultados);
-        crearHojaRespuestas(workbook, e, participantes);
-        crearHojaPromediosGrupales(workbook, e, participantes);
+            List<Participante> participantes = resultados.stream()
+                    .map(r -> participanteService.buscarPorId(r.getParticipanteId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
-        return out.toByteArray();
+            crearHojaResumen(workbook, e, resultados);
+            crearHojaRespuestas(workbook, e, participantes);
+            crearHojaPromediosGrupales(workbook, e, participantes);
+
+            workbook.write(out);
+            return out.toByteArray();
+        }
     }
 
     private void crearHojaResumen(XSSFWorkbook wb, Estilos e, List<Resultado> resultados) {
@@ -198,14 +199,10 @@ public class ExcelService {
         lblTxt.setCellStyle(e.promLabel);
         filaPregTexto.createCell(1).setCellStyle(e.promLabel);
 
-        XSSFCellStyle estTexto = wb.createCellStyle();
-        estTexto.cloneStyleFrom(e.dato);
-        estTexto.setWrapText(true);
-        estTexto.setAlignment(HorizontalAlignment.LEFT);
         for (int i = 1; i <= 39; i++) {
             Cell c = filaPregTexto.createCell(i + 1);
             c.setCellValue(PREGUNTAS.getOrDefault(i, "P" + i));
-            c.setCellStyle(estTexto);
+            c.setCellStyle(e.estTexto);
         }
 
         int nf = 3;
@@ -218,15 +215,16 @@ public class ExcelService {
             crearCeldaTxt(row, 0, p.getNombreCompleto(), txt);
             crearCeldaTxt(row, 1, p.getGrupo(), txt);
 
-            List<Respuesta> respuestas = participanteService
-                    .obtenerRespuestasPorParticipante(p.getId());
+            // Manejo seguro de la lista de respuestas cargadas
+            List<Respuesta> respuestas = p.getRespuestas() != null ? p.getRespuestas() : Collections.emptyList();
             Map<Integer, Respuesta> mapaResp = respuestas.stream()
-                    .collect(Collectors.toMap(Respuesta::getNumeroPregunta, r -> r));
+                    .filter(r -> r.getNumeroPregunta() != null)
+                    .collect(Collectors.toMap(Respuesta::getNumeroPregunta, r -> r, (r1, r2) -> r1));
 
             for (int i = 1; i <= 39; i++) {
                 Cell c = row.createCell(i + 1);
                 Respuesta resp = mapaResp.get(i);
-                if (resp != null) {
+                if (resp != null && resp.getValorProcesado() != null) {
                     c.setCellValue(resp.getValorProcesado());
                     c.setCellStyle(INVERSAS.contains(i)
                             ? (alt ? e.numAltInverso : e.numInverso)
@@ -349,6 +347,7 @@ public class ExcelService {
         XSSFCellStyle numInverso, numAltInverso;
         XSSFCellStyle global, nivel;
         XSSFCellStyle promLabel, promNum;
+        XSSFCellStyle estTexto;
 
         Estilos(XSSFWorkbook wb, DataFormat fmt) {
             cabecera = wb.createCellStyle();
@@ -426,6 +425,11 @@ public class ExcelService {
             promNum.cloneStyleFrom(promLabel);
             promNum.setAlignment(HorizontalAlignment.CENTER);
             promNum.setDataFormat(fmt.getFormat("0.00"));
+
+            estTexto = wb.createCellStyle();
+            estTexto.cloneStyleFrom(dato);
+            estTexto.setWrapText(true);
+            estTexto.setAlignment(HorizontalAlignment.LEFT);
         }
 
         private static XSSFColor color(XSSFWorkbook wb, byte[] rgb) {

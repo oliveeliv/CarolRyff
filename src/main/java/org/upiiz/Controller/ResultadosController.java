@@ -31,7 +31,6 @@ public class ResultadosController {
             @RequestParam(required = false) String anio,
             Model model) {
         try {
-            // Una sola llamada en lugar de N queries
             List<Resultado> resultados = participanteService.filtrarResultados(grupo, anio);
             model.addAttribute("resultados", resultados);
             model.addAttribute("grupos", participanteService.obtenerGrupos());
@@ -47,7 +46,7 @@ public class ResultadosController {
         return "lista";
     }
 
-    // 2. EXPORTAR A EXCEL
+    // 2. EXPORTAR A EXCEL (Ruta específica)
     @GetMapping("/exportar-excel")
     public ResponseEntity<byte[]> exportarExcel(
             @RequestParam(required = false, defaultValue = "") String grupo,
@@ -72,7 +71,7 @@ public class ResultadosController {
         }
     }
 
-    // 3. GRÁFICA GRUPAL
+    // 3. GRÁFICA GRUPAL (Ruta específica)
     @GetMapping("/comparativa-grupal")
     public String mostrarGraficaGrupal(Model model) {
         try {
@@ -101,21 +100,7 @@ public class ResultadosController {
         return "grafica_grupal";
     }
 
-    // 4. DETALLE INDIVIDUAL
-    @GetMapping("/{id}")
-    public String verDetalleIndividual(@PathVariable Long id, Model model) {
-        try {
-            Optional<Resultado> resultado = participanteService.buscarResultadoPorId(id);
-            if (resultado.isEmpty()) return "redirect:/resultados";
-            model.addAttribute("resultado", resultado.get());
-            model.addAttribute("grupos", participanteService.obtenerGrupos());
-            return "resultados";
-        } catch (Exception e) {
-            return "redirect:/resultados";
-        }
-    }
-
-    // 5. PROMEDIO POR GRUPO (API JSON para radar individual)
+    // 4. PROMEDIO POR GRUPO (Ruta específica REST API)
     @GetMapping("/grupo-promedio")
     @ResponseBody
     public Map<String, Double> promedioPorGrupo(@RequestParam String grupo) {
@@ -134,6 +119,20 @@ public class ResultadosController {
             return promedios;
         } catch (Exception e) {
             return datosVacios();
+        }
+    }
+
+    // 5. DETALLE INDIVIDUAL (Colocada al final para no colisionar con rutas anteriores)
+    @GetMapping("/{id}")
+    public String verDetalleIndividual(@PathVariable Long id, Model model) {
+        try {
+            Optional<Resultado> resultado = participanteService.buscarResultadoPorId(id);
+            if (resultado.isEmpty()) return "redirect:/resultados";
+            model.addAttribute("resultado", resultado.get());
+            model.addAttribute("grupos", participanteService.obtenerGrupos());
+            return "resultados";
+        } catch (Exception e) {
+            return "redirect:/resultados";
         }
     }
 
